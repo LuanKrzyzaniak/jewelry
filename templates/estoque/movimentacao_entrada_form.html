@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Entrada de Estoque — Joalheria{% endblock %}
+{% block breadcrumb %}Estoque / <a href="{% url 'estoque:movimentacao_list' %}">Movimentações</a> / Entrada{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small">
+        <i class="bi bi-box-arrow-in-down-right text-success me-1"></i>Entrada Avulsa
+      </div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 small mb-3">
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.produto.label }} <span class="text-danger">*</span></label>
+            {{ form.produto }}
+            {% for error in form.produto.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.quantidade.label }} <span class="text-danger">*</span></label>
+            {{ form.quantidade }}
+            {% for error in form.quantidade.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.peso_padrao.label }} <span class="text-danger">*</span></label>
+            {{ form.peso_padrao }}
+            {% for error in form.peso_padrao.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.custo_mao_de_obra.label }} <span class="text-danger">*</span></label>
+            {{ form.custo_mao_de_obra }}
+            {% for error in form.custo_mao_de_obra.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.fornecedor.label }}</label>
+            {{ form.fornecedor }}
+            {% for error in form.fornecedor.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.observacoes.label }}</label>
+            {{ form.observacoes }}
+            {% for error in form.observacoes.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check-lg me-1"></i>Registrar entrada
+            </button>
+            <a href="{% url 'estoque:movimentacao_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+          <p class="text-muted small mt-3 mb-0"><span class="text-danger">*</span> Campos obrigatórios</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

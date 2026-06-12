@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Editar Peça{% else %}Nova Peça{% endif %} — Joalheria{% endblock %}
+{% block breadcrumb %}
+  Catálogo / <a href="{% url 'catalogo:peca_list' %}">Peças</a> /
+  {% if form.instance.pk %}Editar{% else %}Nova{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small">
+        {% if form.instance.pk %}Editar peça — {{ form.instance.codigo }}{% else %}Cadastrar peça{% endif %}
+      </div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.produto.label }} <span class="text-danger">*</span></label>
+            {{ form.produto }}
+            {% for error in form.produto.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            <div class="form-text">O código da peça é gerado automaticamente após o cadastro.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.status.label }}</label>
+            {{ form.status }}
+            {% for error in form.status.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3" id="campo-peso">
+            <label class="form-label small fw-semibold">{{ form.peso_gramas.label }} <span class="text-danger">*</span></label>
+            {{ form.peso_gramas }}
+            {% for error in form.peso_gramas.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <!-- Campos de produto comum (não relógio) -->
+          <div id="campos-material">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">{{ form.custo_mao_de_obra.label }}</label>
+              {{ form.custo_mao_de_obra }}
+              {% for error in form.custo_mao_de_obra.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <!-- Campo de relógio -->
+          <div id="campo-preco-proprio" class="mb-3" style="display:none">
+            <label class="form-label small fw-semibold">{{ form.preco_proprio.label }} <span class="text-danger">*</span></label>
+            {{ form.preco_proprio }}
+            {% for error in form.preco_proprio.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.observacoes.label }}</label>
+            {{ form.observacoes }}
+            {% for error in form.observacoes.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-warning">Salvar</button>
+            <a href="{% url 'catalogo:peca_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+          <p class="text-muted small mt-3 mb-0"><span class="text-danger">*</span> Campos obrigatórios</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const selProduto     = document.getElementById('id_produto');
+const camposMaterial = document.getElementById('campos-material');
+const campoPrecoProp = document.getElementById('campo-preco-proprio');
+
+function aplicarEstadoProduto() {
+    const opt      = selProduto.options[selProduto.selectedIndex];
+    const isRelogi = opt && opt.dataset.relogio === '1';
+    camposMaterial.style.display = isRelogi ? 'none' : '';
+    campoPrecoProp.style.display = isRelogi ? '' : 'none';
+}
+
+selProduto.addEventListener('change', aplicarEstadoProduto);
+aplicarEstadoProduto();
+</script>
+{% endblock %}

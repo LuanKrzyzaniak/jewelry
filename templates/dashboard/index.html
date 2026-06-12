@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — Joalheria{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+  .kpi-card { border-left: 4px solid; }
+  .kpi-card .kpi-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+  .kpi-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; }
+  .kpi-value { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+  .kpi-sub   { font-size: .75rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h4 class="fw-semibold mb-0">Visão geral</h4>
+  <span class="text-muted small">{{ hoje|date:"l, d \d\e F \d\e Y" }}</span>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm kpi-card h-100" style="border-color:#ffc107!important">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="kpi-icon bg-warning bg-opacity-15 text-warning">
+          <i class="bi bi-cart-check-fill"></i>
+        </div>
+        <div>
+          <div class="kpi-label text-muted">Vendas hoje</div>
+          <div class="kpi-value">R$ {{ vendas_hoje|floatformat:"2g" }}</div>
+          <div class="kpi-sub text-muted">{{ num_vendas_hoje }} venda{{ num_vendas_hoje|pluralize }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm kpi-card h-100" style="border-color:#0d6efd!important">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="kpi-icon bg-primary bg-opacity-10 text-primary">
+          <i class="bi bi-graph-up-arrow"></i>
+        </div>
+        <div>
+          <div class="kpi-label text-muted">Vendas no mês</div>
+          <div class="kpi-value">R$ {{ vendas_mes|floatformat:"2g" }}</div>
+          <div class="kpi-sub text-muted">{{ num_vendas_mes }} venda{{ num_vendas_mes|pluralize }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm kpi-card h-100" style="border-color:#198754!important">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="kpi-icon bg-success bg-opacity-10 text-success">
+          <i class="bi bi-receipt"></i>
+        </div>
+        <div>
+          <div class="kpi-label text-muted">Ticket médio</div>
+          <div class="kpi-value">R$ {{ ticket_medio|floatformat:"2g" }}</div>
+          <div class="kpi-sub text-muted">no mês</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm kpi-card h-100" style="border-color:{% if sem_estoque %}#dc3545{% else %}#6c757d{% endif %}!important">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="kpi-icon {% if sem_estoque %}bg-danger bg-opacity-10 text-danger{% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}">
+          <i class="bi bi-boxes"></i>
+        </div>
+        <div>
+          <div class="kpi-label text-muted">Produtos em estoque</div>
+          <div class="kpi-value">{{ total_em_estoque }}</div>
+          <div class="kpi-sub {% if sem_estoque %}text-danger fw-semibold{% else %}text-muted{% endif %}">
+            {% if sem_estoque %}{{ sem_estoque|length }} zerado{{ sem_estoque|length|pluralize }}{% else %}nenhum zerado{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Cotações -->
+{% if cotacoes %}
+<div class="row g-3 mb-4">
+  {% for nome, cot in cotacoes.items %}
+  <div class="col-sm-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body py-2 px-3 d-flex align-items-center justify-content-between">
+        <div>
+          <div class="kpi-label text-muted">{{ nome }} (R$/g)</div>
+          <div class="fw-bold text-warning fs-5">R$ {{ cot.preco_por_grama|floatformat:"4g" }}</div>
+        </div>
+        <div class="text-end">
+          <i class="bi bi-gem text-warning opacity-50 fs-3"></i>
+          <div class="text-muted" style="font-size:.7rem">{{ cot.data|date:"d/m/Y" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Gráfico + Top produtos -->
+<div class="row g-4 mb-4">
+
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent fw-semibold small d-flex align-items-center gap-2">
+        <i class="bi bi-bar-chart-line text-primary"></i>
+        Vendas dos últimos 30 dias
+      </div>
+      <div class="card-body">
+        <canvas id="chartVendas" height="90"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent fw-semibold small d-flex align-items-center gap-2">
+        <i class="bi bi-trophy text-warning"></i>
+        Top produtos no mês
+      </div>
+      {% if top_produtos %}
+      <ul class="list-group list-group-flush">
+        {% for item in top_produtos %}
+        <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+          <span class="small">{{ item.peca__produto__nome }}</span>
+          <span class="badge bg-warning text-dark rounded-pill">{{ item.qtd }} un.</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="card-body text-center text-muted small py-4">Sem vendas no mês.</div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Últimas vendas + Lotes + Zerados -->
+<div class="row g-4">
+
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent fw-semibold small d-flex align-items-center gap-2">
+        <i class="bi bi-clock-history text-primary"></i>
+        Últimas vendas
+      </div>
+      {% if ultimas_vendas %}
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="small">#</th>
+            <th class="small">Cliente</th>
+            <th class="small text-end">Total</th>
+            <th class="small">Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for venda in ultimas_vendas %}
+          <tr>
+            <td><a href="{% url 'vendas:venda_detail' venda.pk %}" class="text-decoration-none text-muted small">#{{ venda.pk }}</a></td>
+            <td class="small fw-medium">{{ venda.cliente }}</td>
+            <td class="text-end small fw-semibold">R$ {{ venda.valor_total|floatformat:"2g" }}</td>
+            <td class="small text-muted">{{ venda.data_venda|date:"d/m H:i" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="card-footer bg-transparent text-end py-2">
+        <a href="{% url 'vendas:venda_list' %}" class="small text-muted text-decoration-none">Ver todas →</a>
+      </div>
+      {% else %}
+      <div class="card-body text-center text-muted small py-4">Nenhuma venda ainda.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent fw-semibold small d-flex align-items-center gap-2">
+        <i class="bi bi-boxes text-warning"></i>
+        Lotes em aberto
+      </div>
+      {% if lotes_abertos %}
+      <ul class="list-group list-group-flush">
+        {% for lote in lotes_abertos %}
+        <li class="list-group-item py-2 px-3">
+          <a href="{% url 'estoque:lote_detail' lote.pk %}" class="text-decoration-none d-flex justify-content-between align-items-center">
+            <div>
+              <span class="small fw-medium">Lote #{{ lote.pk }}</span>
+              <div class="text-muted" style="font-size:.72rem">{{ lote.criado_em|date:"d/m/Y" }}</div>
+            </div>
+            {% if lote.tipo == 'ENT' %}
+            <span class="badge bg-success-subtle text-success">Entrada</span>
+            {% else %}
+            <span class="badge bg-danger-subtle text-danger">Saída</span>
+            {% endif %}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="card-footer bg-transparent text-end py-2">
+        <a href="{% url 'estoque:lote_list' %}" class="small text-muted text-decoration-none">Ver todos →</a>
+      </div>
+      {% else %}
+      <div class="card-body text-center text-muted small py-4">Nenhum lote em aberto.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm h-100 {% if sem_estoque %}border-start border-danger border-2{% endif %}">
+      <div class="card-header bg-transparent fw-semibold small d-flex align-items-center gap-2 {% if sem_estoque %}text-danger{% endif %}">
+        <i class="bi bi-exclamation-triangle{% if sem_estoque %}-fill{% endif %}"></i>
+        Estoque zerado
+      </div>
+      {% if sem_estoque %}
+      <ul class="list-group list-group-flush">
+        {% for produto in sem_estoque %}
+        <li class="list-group-item py-2 px-3">
+          <a href="{% url 'catalogo:produto_detail' produto.pk %}" class="text-decoration-none small text-danger fw-medium">{{ produto.nome }}</a>
+          <div class="text-muted" style="font-size:.72rem">{{ produto.tipo|default:"—" }}</div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="card-body text-center text-muted small py-4">
+        <i class="bi bi-check-circle text-success fs-4 d-block mb-1"></i>
+        Tudo em estoque.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+const ctx = document.getElementById('chartVendas').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ labels_30d|safe }},
+        datasets: [{
+            label: 'Vendas (R$)',
+            data: {{ data_30d|safe }},
+            borderColor: '#ffc107',
+            backgroundColor: 'rgba(255,193,7,.1)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointBackgroundColor: '#ffc107',
+            fill: true,
+            tension: 0.3,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: ctx => 'R$ ' + ctx.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2})
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: val => 'R$ ' + val.toLocaleString('pt-BR')
+                },
+                grid: { color: 'rgba(0,0,0,.05)' }
+            },
+            x: {
+                grid: { display: false },
+                ticks: {
+                    maxTicksLimit: 10,
+                    font: { size: 11 }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Peça — Joalheria{% endblock %}
+{% block breadcrumb %}Catálogo / <a href="{% url 'catalogo:peca_list' %}">Peças</a> / Excluir{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card border-0 shadow-sm border-danger" style="border-left: 4px solid #dc3545 !important;">
+      <div class="card-body p-4">
+        <h5 class="fw-semibold mb-3">Confirmar exclusão</h5>
+        <p>Tem certeza que deseja excluir a peça <strong>{{ peca }}</strong>?</p>
+        <p class="text-muted small">As fotos associadas também serão removidas. Esta ação não pode ser desfeita.</p>
+        <form method="post" class="d-flex gap-2 mt-4">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Sim, excluir</button>
+          <a href="{% url 'catalogo:peca_detail' peca.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

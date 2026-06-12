@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ peca.codigo }} — Joalheria{% endblock %}
+{% block breadcrumb %}Catálogo / <a href="{% url 'catalogo:peca_list' %}">Peças</a> / {{ peca.codigo }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .foto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; }
+  .foto-item { position: relative; border-radius: .5rem; overflow: hidden; background: #f0f0f0; aspect-ratio: 1; }
+  .foto-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .foto-actions {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,.6));
+    padding: .4rem .5rem .3rem;
+    display: flex; gap: .3rem; justify-content: flex-end;
+    opacity: 0; transition: opacity .15s;
+  }
+  .foto-item:hover .foto-actions { opacity: 1; }
+  .foto-principal-badge {
+    position: absolute; top: .4rem; left: .4rem;
+    background: rgba(255,193,7,.9); color: #000;
+    font-size: .6rem; font-weight: 600;
+    padding: .15rem .4rem; border-radius: .25rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-start justify-content-between mb-4">
+  <div>
+    <h4 class="fw-semibold mb-1">{{ peca.codigo }}</h4>
+    <span class="text-muted small">{{ peca.produto.nome }}</span>
+  </div>
+  {% if user.is_gerente %}
+  <div class="d-flex gap-2">
+    <a href="{% url 'catalogo:peca_update' peca.pk %}" class="btn btn-outline-secondary">
+      <i class="bi bi-pencil me-1"></i>Editar
+    </a>
+    <a href="{% url 'catalogo:peca_delete' peca.pk %}" class="btn btn-outline-danger">
+      <i class="bi bi-trash me-1"></i>Excluir
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+
+  <!-- Dados -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small">Dados da peça</div>
+      <div class="card-body">
+        <dl class="row small mb-0">
+          <dt class="col-5 text-muted">Código</dt>
+          <dd class="col-7 font-monospace">{{ peca.codigo }}</dd>
+
+          <dt class="col-5 text-muted">Produto</dt>
+          <dd class="col-7">
+            <a href="{% url 'catalogo:produto_detail' peca.produto.pk %}" class="text-decoration-none">
+              {{ peca.produto.nome }}
+            </a>
+          </dd>
+
+          {% if peca.produto.tipo %}
+          <dt class="col-5 text-muted">Tipo</dt>
+          <dd class="col-7">{{ peca.produto.tipo }}</dd>
+          {% endif %}
+
+          {% if peca.produto.liga %}
+          <dt class="col-5 text-muted">Liga</dt>
+          <dd class="col-7">{{ peca.produto.liga }}</dd>
+          {% endif %}
+
+          <dt class="col-5 text-muted">Status</dt>
+          <dd class="col-7">
+            <span class="badge
+              {% if peca.status == 'DIS' %}bg-success-subtle text-success border border-success-subtle
+              {% elif peca.status == 'RES' %}bg-warning-subtle text-warning-emphasis border border-warning-subtle
+              {% elif peca.status == 'CON' %}bg-info-subtle text-info-emphasis border border-info-subtle
+              {% else %}bg-secondary-subtle text-secondary border border-secondary-subtle{% endif %}">
+              {{ peca.get_status_display }}
+            </span>
+          </dd>
+
+          <dt class="col-5 text-muted">Peso</dt>
+          <dd class="col-7">{{ peca.peso_gramas }} g</dd>
+
+          {% if peca.is_relogio %}
+          <dt class="col-5 text-muted">Valor</dt>
+          <dd class="col-7 fw-semibold text-success">R$ {{ peca.preco_proprio|floatformat:"2g" }}</dd>
+          {% else %}
+          <dt class="col-5 text-muted">Mão de obra</dt>
+          <dd class="col-7">R$ {{ peca.custo_mao_de_obra|floatformat:"2g" }}</dd>
+
+          <dt class="col-5 fw-semibold">Preço sugerido</dt>
+          <dd class="col-7 fw-bold text-success">R$ {{ peca.preco_sugerido|floatformat:"2g" }}</dd>
+          {% endif %}
+
+          <dt class="col-5 text-muted">Cadastrada</dt>
+          <dd class="col-7">{{ peca.criado_em|date:"d/m/Y" }}</dd>
+        </dl>
+
+        {% if peca.observacoes %}
+        <hr class="my-3">
+        <p class="small text-muted mb-0">{{ peca.observacoes }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Fotos -->
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small d-flex align-items-center justify-content-between">
+        <span>Fotos ({{ peca.fotos.count }})</span>
+      </div>
+      <div class="card-body">
+
+        {% if peca.fotos.all %}
+        <div class="foto-grid mb-4">
+          {% for foto in peca.fotos.all %}
+          <div class="foto-item">
+            <img src="{{ foto.imagem.url }}" alt="Foto {{ forloop.counter }}">
+
+            {% if foto.principal %}
+            <span class="foto-principal-badge"><i class="bi bi-star-fill me-1"></i>Principal</span>
+            {% endif %}
+
+            {% if user.is_gerente %}
+            <div class="foto-actions">
+              {% if not foto.principal %}
+              <form method="post" action="{% url 'catalogo:peca_foto_set_principal' peca.pk foto.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-warning py-0 px-1" title="Definir como principal"
+                        style="font-size:.7rem">
+                  <i class="bi bi-star"></i>
+                </button>
+              </form>
+              {% endif %}
+              <form method="post" action="{% url 'catalogo:peca_foto_delete' peca.pk foto.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger py-0 px-1" title="Remover foto"
+                        style="font-size:.7rem"
+                        onclick="return confirm('Remover esta foto?')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4 mb-3">
+          <i class="bi bi-image fs-1 d-block mb-2 text-muted opacity-25"></i>
+          <p class="text-muted small mb-0">Nenhuma foto cadastrada.</p>
+        </div>
+        {% endif %}
+
+        {% if user.is_gerente %}
+        <form method="post" action="{% url 'catalogo:peca_foto_upload' peca.pk %}"
+              enctype="multipart/form-data">
+          {% csrf_token %}
+          <label class="form-label small fw-semibold">Adicionar fotos</label>
+          <div class="d-flex gap-2 align-items-center">
+            <input type="file" name="imagens" accept="image/*" multiple class="form-control form-control-sm">
+            <button type="submit" class="btn btn-sm btn-warning flex-shrink-0">
+              <i class="bi bi-upload me-1"></i>Enviar
+            </button>
+          </div>
+          <div class="form-text">Selecione uma ou mais imagens de uma vez.</div>
+        </form>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

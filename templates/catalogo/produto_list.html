@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}Produtos — Joalheria{% endblock %}
+{% block breadcrumb %}Catálogo / Produtos{% endblock %}
+
+{% block extra_head %}
+<style>
+  .produto-card {
+    transition: transform .15s ease, box-shadow .15s ease;
+    cursor: default;
+  }
+  .produto-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 .6rem 1.8rem rgba(0,0,0,.13) !important;
+  }
+.produto-price-label {
+    font-size: .6rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #6c757d;
+  }
+  .tipo-chip {
+    cursor: pointer;
+    user-select: none;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h4 class="fw-semibold mb-0">Catálogo de Produtos</h4>
+    <span class="text-muted small">{{ produtos|length }} produto{{ produtos|length|pluralize }}</span>
+  </div>
+  {% if user.is_gerente %}
+  <a href="{% url 'catalogo:produto_create' %}" class="btn btn-warning">
+    <i class="bi bi-plus-lg me-1"></i>Novo produto
+  </a>
+  {% endif %}
+</div>
+
+<!-- Filtros -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body py-3">
+    <form method="get" id="filtro-form">
+
+      <!-- Linha 1: busca + zerados + ações -->
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="input-group input-group-sm flex-grow-1" style="max-width:340px">
+          <span class="input-group-text bg-transparent border-end-0">
+            <i class="bi bi-search text-muted"></i>
+          </span>
+          <input type="text" name="q" value="{{ busca }}" class="form-control border-start-0 ps-0"
+                 placeholder="Buscar por nome ou liga...">
+        </div>
+        <div class="form-check mb-0">
+          <input type="checkbox" name="sem_estoque" id="sem_estoque" value="1"
+                 class="form-check-input" {% if sem_estoque %}checked{% endif %}
+                 onchange="document.getElementById('filtro-form').submit()">
+          <label for="sem_estoque" class="form-check-label small text-muted">Zerados</label>
+        </div>
+        <button type="submit" class="btn btn-sm btn-outline-secondary ms-auto">Buscar</button>
+        {% if busca or sem_estoque or tipo_atual or ligas_selecionadas %}
+        <a href="{% url 'catalogo:produto_list' %}" class="btn btn-sm btn-link text-muted p-0">Limpar</a>
+        {% endif %}
+      </div>
+
+      <hr class="my-3">
+
+      <!-- Linha 2: chips de tipo -->
+      <div class="d-flex flex-wrap align-items-center gap-1 mb-2">
+        <span class="small fw-semibold text-muted me-2">Tipo</span>
+        <a href="?{% if busca %}q={{ busca }}&{% endif %}{% if sem_estoque %}sem_estoque=1&{% endif %}{% for lid in ligas_selecionadas %}liga={{ lid }}&{% endfor %}"
+           class="badge rounded-pill tipo-chip text-decoration-none py-2 px-3
+                  {% if not tipo_atual %}bg-dark text-white{% else %}bg-light text-dark border{% endif %}">
+          Todos
+        </a>
+        {% for tipo in todos_tipos %}
+        <a href="?tipo={{ tipo.pk }}{% if busca %}&q={{ busca }}{% endif %}{% if sem_estoque %}&sem_estoque=1{% endif %}{% for lid in ligas_selecionadas %}&liga={{ lid }}{% endfor %}"
+           class="badge rounded-pill tipo-chip text-decoration-none py-2 px-3
+                  {% if tipo_atual == tipo.pk|stringformat:'s' %}bg-dark text-white{% else %}bg-light text-dark border{% endif %}">
+          {{ tipo.nome }}
+        </a>
+        {% endfor %}
+      </div>
+
+      <!-- Linha 3: chips de liga -->
+      {% if todas_ligas %}
+      <div class="d-flex flex-wrap align-items-center gap-1">
+        <span class="small fw-semibold text-muted me-2">Liga</span>
+        <a href="?{% if tipo_atual %}tipo={{ tipo_atual }}&{% endif %}{% if busca %}q={{ busca }}&{% endif %}{% if sem_estoque %}sem_estoque=1&{% endif %}"
+           class="badge rounded-pill tipo-chip text-decoration-none py-2 px-3
+                  {% if not ligas_selecionadas %}bg-dark text-white{% else %}bg-light text-dark border{% endif %}">
+          Todas
+        </a>
+        {% for liga in todas_ligas %}
+        <label class="badge rounded-pill tipo-chip py-2 px-3 mb-0
+                      {% if liga.pk|stringformat:'s' in ligas_selecionadas %}bg-dark text-white{% else %}bg-light text-dark border{% endif %}">
+          <input type="checkbox" name="liga" value="{{ liga.pk }}" class="d-none liga-chk"
+                 {% if liga.pk|stringformat:'s' in ligas_selecionadas %}checked{% endif %}>
+          {{ liga.nome }}
+        </label>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </form>
+  </div>
+</div>
+
+<!-- Grade -->
+{% if produtos %}
+<div class="row g-3">
+  {% for produto in produtos %}
+
+  {% with metal=produto.liga.metal.simbolo|default:"" %}
+  <div class="col-sm-6 col-lg-4 col-xl-3">
+    <div class="card border-0 shadow-sm h-100 produto-card"
+         style="border-top: 3px solid {% if metal == 'XAU' %}#ffc107{% elif metal == 'XAG' %}#adb5bd{% elif produto.liga %}#6ea8fe{% else %}#dee2e6{% endif %} !important">
+
+      <div class="card-body d-flex flex-column gap-2 p-3">
+
+        <!-- Top row: ícone do tipo + badge de estoque -->
+        <div class="d-flex align-items-center justify-content-between">
+          <i class="
+            {% if produto.tipo.nome == 'Anel' %}bi bi-circle
+            {% elif produto.tipo.nome == 'Aliança' %}bi bi-infinity
+            {% elif produto.tipo.nome == 'Brinco' %}bi bi-gem
+            {% elif produto.tipo.nome == 'Colar' %}bi bi-link-45deg
+            {% elif produto.tipo.nome == 'Corrente' %}bi bi-link
+            {% elif produto.tipo.nome == 'Pulseira' %}bi bi-watch
+            {% elif produto.tipo.nome == 'Bracelete' %}bi bi-watch
+            {% elif produto.tipo.nome == 'Pingente' %}bi bi-tag
+            {% elif produto.tipo.nome == 'Piercing' %}bi bi-circle-fill
+            {% elif produto.tipo.nome == 'Relógio' %}bi bi-alarm
+            {% else %}bi bi-box
+            {% endif %}
+            {% if metal == 'XAU' %}text-warning
+            {% elif metal == 'XAG' %}text-secondary
+            {% elif produto.liga %}text-primary
+            {% else %}text-muted{% endif %}"
+            style="font-size:1.4rem"></i>
+
+          {% if produto.estoque_calc == 0 %}
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Zerado</span>
+          {% elif produto.estoque_calc <= 2 %}
+          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">{{ produto.estoque_calc }} un.</span>
+          {% else %}
+          <span class="badge bg-success-subtle text-success border border-success-subtle">{{ produto.estoque_calc }} un.</span>
+          {% endif %}
+        </div>
+
+        <!-- Name + liga -->
+        <div>
+          <div class="fw-semibold lh-sm mb-0" style="font-size:.9rem">{{ produto.nome }}</div>
+          {% if produto.liga %}
+          <div class="text-muted" style="font-size:.78rem">{{ produto.liga }}</div>
+          {% else %}
+          <div class="text-muted" style="font-size:.78rem">Sem liga</div>
+          {% endif %}
+        </div>
+
+        <!-- Type badge -->
+        {% if produto.tipo %}
+        <div>
+          <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis" style="font-size:.68rem">
+            {{ produto.tipo }}
+          </span>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="mt-auto pt-2 border-top d-flex justify-content-end">
+          <div class="d-flex gap-1">
+            <a href="{% url 'catalogo:produto_detail' produto.pk %}"
+               class="btn btn-sm btn-outline-secondary" title="Detalhes">
+              <i class="bi bi-eye"></i>
+            </a>
+            {% if user.is_gerente %}
+            <a href="{% url 'catalogo:produto_update' produto.pk %}"
+               class="btn btn-sm btn-outline-secondary" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  {% endwith %}
+
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="text-center py-5">
+  <i class="bi bi-gem fs-1 d-block mb-3 text-muted opacity-25"></i>
+  <p class="text-muted mb-3">Nenhum produto encontrado.</p>
+  {% if busca or sem_estoque or tipo_atual %}
+  <a href="{% url 'catalogo:produto_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-x me-1"></i>Limpar filtros
+  </a>
+  {% elif user.is_gerente %}
+  <a href="{% url 'catalogo:produto_create' %}" class="btn btn-warning btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>Adicionar primeiro produto
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.liga-chk').forEach(chk => {
+    chk.addEventListener('change', () => {
+        document.getElementById('filtro-form').submit();
+    });
+});
+</script>
+{% endblock %}

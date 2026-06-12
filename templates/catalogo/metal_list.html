@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Metais — Joalheria{% endblock %}
+{% block breadcrumb %}Gerência / Metais{% endblock %}
+
+{% block content %}
+<h4 class="fw-semibold mb-4">Metais</h4>
+
+<div class="card border-0 shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>Nome</th>
+        <th>Símbolo (API)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for metal in metais %}
+      <tr>
+        <td class="fw-medium">{{ metal.nome }}</td>
+        <td class="text-muted small font-monospace">{{ metal.simbolo }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="2" class="text-center text-muted py-4">Nenhum metal cadastrado.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

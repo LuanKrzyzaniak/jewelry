@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+
+{% block title %}Venda #{{ venda.pk }} — Joalheria{% endblock %}
+{% block breadcrumb %}Vendas / <a href="{% url 'vendas:venda_list' %}">Histórico</a> / #{{ venda.pk }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-start justify-content-between mb-4">
+  <div>
+    <h4 class="fw-semibold mb-1">Venda #{{ venda.pk }}</h4>
+    <span class="text-muted small">{{ venda.data_venda|date:"d/m/Y H:i" }} — {{ venda.vendedor.get_full_name|default:venda.vendedor.username }}</span>
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    {% if venda.status == 'CON' %}<span class="badge bg-success fs-6">Confirmada</span>
+    {% elif venda.status == 'ORC' %}<span class="badge bg-secondary fs-6">Orçamento</span>
+    {% elif venda.status == 'RES' %}<span class="badge bg-info text-dark fs-6">Reservada</span>
+    {% elif venda.status == 'CAN' %}<span class="badge bg-danger fs-6">Cancelada</span>
+    {% endif %}
+    <a href="{% url 'vendas:venda_update' venda.pk %}" class="btn btn-outline-secondary">
+      <i class="bi bi-pencil me-1"></i>Editar
+    </a>
+  </div>
+</div>
+
+<!-- Form hidden para adição de peça via picker modal -->
+{% if venda.status != 'CAN' %}
+<form method="post" action="{% url 'vendas:item_adicionar' venda.pk %}" id="formAdicionarPeca">
+  {% csrf_token %}
+  <input type="hidden" name="peca_id" id="hiddenPecaId">
+  <input type="hidden" name="preco_unitario_pago" id="hiddenPreco">
+</form>
+{% endif %}
+
+<div class="row g-4">
+
+  <!-- Itens -->
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+        <span class="fw-semibold small">Peças</span>
+        {% if venda.status != 'CAN' %}
+        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#modalPicker">
+          <i class="bi bi-plus-lg me-1"></i>Adicionar peça
+        </button>
+        {% endif %}
+      </div>
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Código</th>
+            <th>Produto</th>
+            <th>Liga / Peso</th>
+            <th class="text-end">Preço pago</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in venda.itens.all %}
+          <tr>
+            <td>
+              <a href="{% url 'catalogo:peca_detail' item.peca.pk %}" class="text-decoration-none fw-semibold small">
+                {{ item.peca.codigo }}
+              </a>
+            </td>
+            <td>
+              <a href="{% url 'catalogo:produto_detail' item.produto.pk %}" class="text-decoration-none small">
+                {{ item.produto.nome }}
+              </a>
+            </td>
+            <td class="small text-muted">
+              {{ item.produto.liga|default:"—" }}
+              {% if item.peca.peso_gramas %}· {{ item.peca.peso_gramas }} g{% endif %}
+            </td>
+            <td class="text-end fw-semibold">R$ {{ item.preco_unitario_pago|floatformat:"2g" }}</td>
+            <td class="text-end">
+              {% if venda.status != 'CAN' %}
+              <form method="post" action="{% url 'vendas:item_remover' venda.pk item.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger"
+                  onclick="return confirm('Remover peça {{ item.peca.codigo }} e devolver ao estoque?')">
+                  <i class="bi bi-x"></i>
+                </button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-3 small">Nenhuma peça adicionada ainda.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Resumo -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small">Resumo</div>
+      <div class="card-body">
+        <dl class="row small mb-0">
+          <dt class="col-7 text-muted">Cliente</dt>
+          <dd class="col-5">{{ venda.cliente }}</dd>
+
+          <dt class="col-7 text-muted">Desconto</dt>
+          <dd class="col-5">R$ {{ venda.desconto_total|floatformat:"2g" }}</dd>
+
+          <dt class="col-7 fw-semibold">Total</dt>
+          <dd class="col-5 fw-bold fs-5 text-success mb-0">R$ {{ venda.valor_total|floatformat:"2g" }}</dd>
+        </dl>
+        {% if venda.observacoes %}
+        <hr class="my-3">
+        <p class="small text-muted mb-0">{{ venda.observacoes }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if venda.status != 'CAN' %}
+    <div class="mt-3">
+      <form method="post" action="{% url 'vendas:venda_cancelar' venda.pk %}"
+            onsubmit="return confirm('Cancelar venda #{{ venda.pk }}? Todas as peças voltarão ao estoque.')">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+          <i class="bi bi-x-circle me-1"></i>Cancelar venda
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── Modal picker de peças ─────────────────────────────────────────────── -->
+{% if venda.status != 'CAN' %}
+<div class="modal fade" id="modalPicker" tabindex="-1" aria-labelledby="modalPickerLabel">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalPickerLabel">Selecionar Peça</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex gap-2 mb-3">
+          <input type="search" id="searchPeca" class="form-control" placeholder="Buscar por código ou nome…">
+          <select id="filtroTipo" class="form-select" style="max-width:200px">
+            <option value="">Todos os tipos</option>
+            {% for tipo in tipos_produto %}
+            <option value="{{ tipo.pk }}">{{ tipo.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div id="pecaGrid" class="row g-2"></div>
+        <p id="semResultados" class="text-center text-muted py-4 d-none">Nenhuma peça disponível.</p>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <div id="pickerSelecionada" class="text-muted small d-none flex-grow-1 me-3">
+          <div class="mb-1">Selecionada: <strong id="pickerPecaCodigo"></strong></div>
+          <div class="d-flex align-items-center gap-2">
+            <label class="small fw-semibold mb-0 text-nowrap">Preço pago (R$):</label>
+            <input type="number" id="pickerPreco" class="form-control form-control-sm" style="max-width:130px" step="0.01" min="0.01" placeholder="0,00">
+          </div>
+        </div>
+        <div class="d-flex gap-2 flex-shrink-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" id="btnConfirmarPeca" class="btn btn-warning" disabled>
+            <i class="bi bi-check-lg me-1"></i>Adicionar à venda
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script id="pecas-data" type="application/json">{{ pecas_json }}</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if venda.status != 'CAN' %}
+<script>
+const PECAS = JSON.parse(document.getElementById('pecas-data').textContent);
+let selecionada = null;
+
+function formatBRL(val) {
+  return parseFloat(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderCards(lista) {
+  const grid = document.getElementById('pecaGrid');
+  const sem  = document.getElementById('semResultados');
+  grid.innerHTML = '';
+  if (!lista.length) { sem.classList.remove('d-none'); return; }
+  sem.classList.add('d-none');
+  lista.forEach(p => {
+    const col = document.createElement('div');
+    col.className = 'col-6 col-md-3 col-lg-2';
+    const img = p.foto_url
+      ? `<img src="${p.foto_url}" class="card-img-top" style="height:100px;object-fit:cover;border-radius:4px 4px 0 0">`
+      : `<div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height:100px"><i class="bi bi-image text-muted fs-3"></i></div>`;
+    col.innerHTML = `
+      <div class="card h-100 peca-card border-2" data-id="${p.id}" data-preco="${p.preco}"
+           style="cursor:pointer;transition:border-color .15s">
+        ${img}
+        <div class="card-body p-2">
+          <div class="small fw-semibold">${p.codigo}</div>
+          <div class="small text-muted text-truncate" title="${p.nome}">${p.nome}</div>
+          ${p.liga ? `<div class="small text-muted">${p.liga}</div>` : ''}
+          ${p.peso ? `<div class="small text-muted">${p.peso} g</div>` : ''}
+          <div class="small fw-bold text-success mt-1">R$ ${formatBRL(p.preco)}</div>
+        </div>
+      </div>`;
+    col.querySelector('.peca-card').addEventListener('click', () => selecionarPeca(p));
+    grid.appendChild(col);
+  });
+  if (selecionada) {
+    const c = grid.querySelector(`.peca-card[data-id="${selecionada.id}"]`);
+    if (c) c.classList.add('border-warning');
+  }
+}
+
+function selecionarPeca(p) {
+  document.querySelectorAll('.peca-card').forEach(c => c.classList.remove('border-warning'));
+  const card = document.querySelector(`.peca-card[data-id="${p.id}"]`);
+  if (card) card.classList.add('border-warning');
+  selecionada = p;
+  document.getElementById('pickerSelecionada').classList.remove('d-none');
+  document.getElementById('pickerPecaCodigo').textContent = `${p.codigo} — ${p.nome}`;
+  const precoInput = document.getElementById('pickerPreco');
+  precoInput.value = parseFloat(p.preco).toFixed(2);
+  document.getElementById('btnConfirmarPeca').disabled = false;
+}
+
+function filtrar() {
+  const q = document.getElementById('searchPeca').value.toLowerCase();
+  const tipoId = document.getElementById('filtroTipo').value;
+  renderCards(PECAS.filter(p => {
+    const matchQ = !q || p.codigo.toLowerCase().includes(q) || p.nome.toLowerCase().includes(q);
+    const matchT = !tipoId || String(p.tipo_id) === tipoId;
+    return matchQ && matchT;
+  }));
+}
+
+document.getElementById('searchPeca').addEventListener('input', filtrar);
+document.getElementById('filtroTipo').addEventListener('change', filtrar);
+document.getElementById('modalPicker').addEventListener('show.bs.modal', () => {
+  selecionada = null;
+  document.getElementById('pickerSelecionada').classList.add('d-none');
+  document.getElementById('btnConfirmarPeca').disabled = true;
+  document.getElementById('pickerPreco').value = '';
+  document.getElementById('searchPeca').value = '';
+  document.getElementById('filtroTipo').value = '';
+  renderCards(PECAS);
+});
+
+document.getElementById('btnConfirmarPeca').addEventListener('click', () => {
+  if (!selecionada) return;
+  const preco = document.getElementById('pickerPreco').value;
+  if (!preco || parseFloat(preco) <= 0) {
+    document.getElementById('pickerPreco').classList.add('is-invalid');
+    document.getElementById('pickerPreco').focus();
+    return;
+  }
+  document.getElementById('pickerPreco').classList.remove('is-invalid');
+  document.getElementById('hiddenPecaId').value = selecionada.id;
+  document.getElementById('hiddenPreco').value = preco;
+  document.getElementById('formAdicionarPeca').submit();
+});
+</script>
+{% endif %}
+{% endblock %}

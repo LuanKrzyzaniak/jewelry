@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Saída de Estoque — Joalheria{% endblock %}
+{% block breadcrumb %}Estoque / <a href="{% url 'estoque:movimentacao_list' %}">Movimentações</a> / Saída{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small">
+        <i class="bi bi-box-arrow-up-right text-danger me-1"></i>Saída / Ajuste Avulso
+      </div>
+      <div class="card-body">
+        <form method="post" id="formSaida" novalidate>
+          {% csrf_token %}
+          {{ form.peca_id }}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 small mb-3">
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Peca selecionada -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Peça <span class="text-danger">*</span></label>
+            <div id="pecaSelecionadaBox" class="border rounded p-2 bg-light d-flex align-items-center gap-2 mb-1"
+                 style="min-height:48px">
+              <span id="pecaSelecionadaTexto" class="text-muted small">Nenhuma peça selecionada.</span>
+            </div>
+            <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalPicker">
+              <i class="bi bi-search me-1"></i>Selecionar peça
+            </button>
+            {% for error in form.peca_id.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.tipo.label }} <span class="text-danger">*</span></label>
+            {{ form.tipo }}
+            {% for error in form.tipo.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.cliente.label }}</label>
+            {{ form.cliente }}
+            {% for error in form.cliente.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.observacoes.label }}</label>
+            {{ form.observacoes }}
+            {% for error in form.observacoes.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-danger" id="btnSalvarSaida" disabled>
+              <i class="bi bi-check-lg me-1"></i>Registrar
+            </button>
+            <a href="{% url 'estoque:movimentacao_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+          <p class="text-muted small mt-3 mb-0"><span class="text-danger">*</span> Campos obrigatórios</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal picker de peças ─────────────────────────────────────────────── -->
+<div class="modal fade" id="modalPicker" tabindex="-1" aria-labelledby="modalPickerLabel">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalPickerLabel">Selecionar Peça</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex gap-2 mb-3">
+          <input type="search" id="searchPeca" class="form-control" placeholder="Buscar por código ou nome…">
+          <select id="filtroTipo" class="form-select" style="max-width:200px">
+            <option value="">Todos os tipos</option>
+            {% for tipo in tipos_produto %}
+            <option value="{{ tipo.pk }}">{{ tipo.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div id="pecaGrid" class="row g-2"></div>
+        <p id="semResultados" class="text-center text-muted py-4 d-none">Nenhuma peça encontrada.</p>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <div id="pickerSelecionada" class="text-muted small d-none">
+          Selecionada: <strong id="pickerPecaCodigo"></strong>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" id="btnConfirmarPeca" class="btn btn-warning" disabled>
+            <i class="bi bi-check-lg me-1"></i>Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script id="pecas-data" type="application/json">{{ pecas_json }}</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const PECAS = JSON.parse(document.getElementById('pecas-data').textContent);
+let selecionada = null;
+
+function formatBRL(val) {
+  return parseFloat(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderCards(lista) {
+  const grid = document.getElementById('pecaGrid');
+  const sem  = document.getElementById('semResultados');
+  grid.innerHTML = '';
+  if (!lista.length) { sem.classList.remove('d-none'); return; }
+  sem.classList.add('d-none');
+  lista.forEach(p => {
+    const col = document.createElement('div');
+    col.className = 'col-6 col-md-3 col-lg-2';
+    const img = p.foto_url
+      ? `<img src="${p.foto_url}" class="card-img-top" style="height:100px;object-fit:cover;border-radius:4px 4px 0 0">`
+      : `<div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height:100px"><i class="bi bi-image text-muted fs-3"></i></div>`;
+    col.innerHTML = `
+      <div class="card h-100 peca-card border-2" data-id="${p.id}" style="cursor:pointer;transition:border-color .15s">
+        ${img}
+        <div class="card-body p-2">
+          <div class="small fw-semibold">${p.codigo}</div>
+          <div class="small text-muted text-truncate" title="${p.nome}">${p.nome}</div>
+          ${p.liga ? `<div class="small text-muted">${p.liga}</div>` : ''}
+          ${p.peso ? `<div class="small text-muted">${p.peso} g</div>` : ''}
+          <div class="small fw-bold text-success mt-1">R$ ${formatBRL(p.preco)}</div>
+        </div>
+      </div>`;
+    col.querySelector('.peca-card').addEventListener('click', () => selecionarPeca(p));
+    grid.appendChild(col);
+  });
+  if (selecionada) {
+    const c = grid.querySelector(`.peca-card[data-id="${selecionada.id}"]`);
+    if (c) c.classList.add('border-warning');
+  }
+}
+
+function selecionarPeca(p) {
+  document.querySelectorAll('.peca-card').forEach(c => c.classList.remove('border-warning'));
+  const card = document.querySelector(`.peca-card[data-id="${p.id}"]`);
+  if (card) card.classList.add('border-warning');
+  selecionada = p;
+  document.getElementById('pickerSelecionada').classList.remove('d-none');
+  document.getElementById('pickerPecaCodigo').textContent = `${p.codigo} — ${p.nome}`;
+  document.getElementById('btnConfirmarPeca').disabled = false;
+}
+
+function filtrar() {
+  const q = document.getElementById('searchPeca').value.toLowerCase();
+  const tipoId = document.getElementById('filtroTipo').value;
+  renderCards(PECAS.filter(p => {
+    const matchQ = !q || p.codigo.toLowerCase().includes(q) || p.nome.toLowerCase().includes(q);
+    const matchT = !tipoId || String(p.tipo_id) === tipoId;
+    return matchQ && matchT;
+  }));
+}
+
+document.getElementById('searchPeca').addEventListener('input', filtrar);
+document.getElementById('filtroTipo').addEventListener('change', filtrar);
+document.getElementById('modalPicker').addEventListener('show.bs.modal', () => {
+  selecionada = null;
+  document.getElementById('pickerSelecionada').classList.add('d-none');
+  document.getElementById('btnConfirmarPeca').disabled = true;
+  document.getElementById('searchPeca').value = '';
+  document.getElementById('filtroTipo').value = '';
+  renderCards(PECAS);
+});
+
+document.getElementById('btnConfirmarPeca').addEventListener('click', () => {
+  if (!selecionada) return;
+  document.querySelector('#formSaida [name="peca_id"]').value = selecionada.id;
+  document.getElementById('pecaSelecionadaTexto').textContent = `${selecionada.codigo} — ${selecionada.nome}`;
+  document.getElementById('pecaSelecionadaTexto').className = 'small fw-semibold';
+  document.getElementById('btnSalvarSaida').disabled = false;
+  bootstrap.Modal.getInstance(document.getElementById('modalPicker')).hide();
+});
+</script>
+{% endblock %}

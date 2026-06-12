@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Adicionar Item — Venda #{{ venda.pk }}{% endblock %}
+{% block breadcrumb %}Vendas / <a href="{% url 'vendas:venda_detail' venda.pk %}">Venda #{{ venda.pk }}</a> / Adicionar item{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small">Adicionar item à Venda #{{ venda.pk }}</div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 small">
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+          </div>
+          {% endif %}
+
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+            {{ field }}
+            {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+          {% endfor %}
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-warning">Adicionar</button>
+            <a href="{% url 'vendas:venda_detail' venda.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+          <p class="text-muted small mt-3 mb-0"><span class="text-danger">*</span> Campos obrigatórios</p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Definir Preço — {{ liga }}{% endblock %}
+{% block breadcrumb %}Catálogo / <a href="{% url 'catalogo:liga_list' %}">Ligas</a> / {{ liga }} / Preço{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <div class="col-md-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small">Definir preço — {{ liga }}</div>
+      <div class="card-body">
+        <p class="small text-muted mb-3">
+          Preço que a loja cobra por grama desta liga. A margem é a diferença entre este valor e a cotação atual do mercado.
+        </p>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.preco_por_grama.label }} <span class="text-danger">*</span></label>
+            {{ form.preco_por_grama }}
+            {% for error in form.preco_por_grama.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-warning">Salvar</button>
+            <a href="{% url 'catalogo:liga_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+          <p class="text-muted small mt-3 mb-0"><span class="text-danger">*</span> Campos obrigatórios</p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small">Histórico de preços</div>
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Vigente desde</th><th class="text-end">R$/g</th><th>Definido por</th></tr>
+        </thead>
+        <tbody>
+          {% for p in historico %}
+          <tr {% if forloop.first %}class="table-warning"{% endif %}>
+            <td class="small">{{ p.vigente_desde|date:"d/m/Y" }}</td>
+            <td class="text-end fw-semibold">{{ p.preco_por_grama|floatformat:4 }}</td>
+            <td class="small text-muted">{{ p.definido_por.get_full_name|default:p.definido_por.username }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="text-center text-muted py-3 small">Nenhum registro ainda.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

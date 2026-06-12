@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Cotações — Joalheria{% endblock %}
+{% block breadcrumb %}Catálogo / Cotações{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h4 class="fw-semibold mb-0">Cotações de Metais</h4>
+  <span class="text-muted small">Últimas 60 entradas — atualizado diariamente via cron</span>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>Data</th>
+        <th>Metal</th>
+        <th class="text-end">R$/grama</th>
+        <th>Fonte</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cotacao in cotacoes %}
+      <tr>
+        <td class="small">{{ cotacao.data|date:"d/m/Y" }}</td>
+        <td class="fw-medium">{{ cotacao.metal }}</td>
+        <td class="text-end font-monospace">R$ {{ cotacao.preco_por_grama|floatformat:4 }}</td>
+        <td>
+          {% if cotacao.fonte == 'api' %}
+          <span class="badge bg-success-subtle text-success">API</span>
+          {% elif cotacao.fonte == 'mock' %}
+          <span class="badge bg-warning-subtle text-warning">Mock</span>
+          {% else %}
+          <span class="badge bg-secondary-subtle text-secondary">{{ cotacao.fonte }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4" class="text-center text-muted py-4">
+          Nenhuma cotação registrada. Execute <code>python manage.py atualizar_cotacoes</code>.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

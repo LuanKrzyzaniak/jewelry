@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Nova Movimentação — Joalheria{% endblock %}
+{% block breadcrumb %}Estoque / <a href="{% url 'estoque:movimentacao_list' %}">Movimentações</a> / Nova{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small">Registrar movimentação</div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 small">
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Tipo -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.tipo.label }} <span class="text-danger">*</span></label>
+            {{ form.tipo }}
+            {% for error in form.tipo.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <!-- Filtro de tipo de produto (não enviado ao servidor) -->
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">{{ form.filtro_tipo.label }}</label>
+            {{ form.filtro_tipo }}
+          </div>
+
+          <!-- Produto -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.produto.label }} <span class="text-danger">*</span></label>
+            {{ form.produto }}
+            {% for error in form.produto.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <!-- Quantidade -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.quantidade.label }} <span class="text-danger">*</span></label>
+            {{ form.quantidade }}
+            {% for error in form.quantidade.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <!-- Fornecedor — visível só em entradas -->
+          <div class="mb-3" id="campo-fornecedor" style="display:none">
+            <label class="form-label small fw-semibold">{{ form.fornecedor.label }}</label>
+            {{ form.fornecedor }}
+            {% for error in form.fornecedor.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <!-- Cliente — visível só em saídas -->
+          <div class="mb-3" id="campo-cliente" style="display:none">
+            <label class="form-label small fw-semibold">{{ form.cliente.label }}</label>
+            {{ form.cliente }}
+            {% for error in form.cliente.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          </div>
+
+          <!-- Observações -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.observacoes.label }}</label>
+            {{ form.observacoes }}
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-warning">Registrar</button>
+            <a href="{% url 'estoque:movimentacao_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+          <p class="text-muted small mt-3 mb-0"><span class="text-danger">*</span> Campos obrigatórios</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const TIPOS_ENTRADA = ['ENT', 'AJP', 'DEV'];
+const TIPOS_SAIDA   = ['SAI', 'AJN'];
+
+const selTipo       = document.getElementById('id_tipo');
+const selProduto    = document.getElementById('id_produto');
+const selFiltroTipo = document.getElementById('filtro-tipo');
+const divFornecedor = document.getElementById('campo-fornecedor');
+const divCliente    = document.getElementById('campo-cliente');
+
+function atualizarCamposVisiveis() {
+    const tipo = selTipo.value;
+    divFornecedor.style.display = TIPOS_ENTRADA.includes(tipo) ? '' : 'none';
+    divCliente.style.display    = TIPOS_SAIDA.includes(tipo)   ? '' : 'none';
+}
+
+function filtrarProdutos() {
+    const tipoId = selFiltroTipo.value;
+
+    if (!tipoId) {
+        selProduto.value    = '';
+        selProduto.disabled = true;
+        return;
+    }
+
+    selProduto.disabled = false;
+    Array.from(selProduto.options).forEach(opt => {
+        if (!opt.value) return;
+        opt.hidden = opt.dataset.tipo !== tipoId;
+    });
+    if (selProduto.selectedOptions[0]?.hidden) selProduto.value = '';
+}
+
+selTipo.addEventListener('change', atualizarCamposVisiveis);
+selFiltroTipo.addEventListener('change', filtrarProdutos);
+
+atualizarCamposVisiveis();
+filtrarProdutos();
+</script>
+{% endblock %}

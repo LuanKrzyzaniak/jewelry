@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load vendas_filters %}
+
+{% block title %}Clientes — Joalheria{% endblock %}
+{% block breadcrumb %}Vendas / Clientes{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h4 class="fw-semibold mb-0">Clientes</h4>
+  <a href="{% url 'vendas:cliente_create' %}" class="btn btn-warning">
+    <i class="bi bi-plus-lg me-1"></i>Novo cliente
+  </a>
+</div>
+
+<form method="get" class="mb-4 d-flex gap-2">
+  <input type="text" name="q" value="{{ busca }}" class="form-control form-control-sm w-auto" placeholder="Buscar por nome...">
+  <button type="submit" class="btn btn-sm btn-outline-secondary">Buscar</button>
+  {% if busca %}<a href="{% url 'vendas:cliente_list' %}" class="btn btn-sm btn-link text-muted">Limpar</a>{% endif %}
+</form>
+
+<div class="card border-0 shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>Nome</th><th>Telefone</th><th>Observação</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for cliente in clientes %}
+      <tr>
+        <td class="fw-medium">{{ cliente.nome }}</td>
+        <td class="small">{{ cliente.telefone|formato_tel|default:"—" }}</td>
+        <td class="small text-muted">{{ cliente.observacao|default:"—"|truncatechars:60 }}</td>
+        <td class="text-end">
+          <a href="{% url 'vendas:cliente_update' cliente.pk %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-pencil"></i>
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-center text-muted py-4">Nenhum cliente cadastrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

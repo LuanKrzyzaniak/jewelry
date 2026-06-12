@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório de Vendas — Joalheria{% endblock %}
+{% block breadcrumb %}Gerência / Relatórios / Vendas{% endblock %}
+
+{% block content %}
+<h4 class="fw-semibold mb-4">Relatório de Vendas</h4>
+
+<!-- Filtro de período -->
+<form method="get" class="card border-0 shadow-sm p-3 mb-4">
+  <div class="row g-3 align-items-end">
+    <div class="col-auto">
+      <label class="form-label small fw-semibold mb-1">De</label>
+      <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-auto">
+      <label class="form-label small fw-semibold mb-1">Até</label>
+      <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-warning btn-sm">Filtrar</button>
+    </div>
+  </div>
+</form>
+
+<!-- Cards resumo -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small mb-1">Vendas confirmadas</div>
+        <div class="fs-3 fw-bold">{{ num_vendas }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small mb-1">Valor total</div>
+        <div class="fs-3 fw-bold text-success">R$ {{ valor_total|floatformat:"2g" }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small mb-1">Ticket médio</div>
+        <div class="fs-3 fw-bold">R$ {{ ticket_medio|floatformat:"2g" }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Tabela de vendas -->
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small">Vendas do período</div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Data</th>
+              <th>Cliente</th>
+              <th class="text-center">Itens</th>
+              <th class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for venda in vendas %}
+            <tr>
+              <td class="text-muted small">
+                <a href="{% url 'vendas:venda_detail' venda.pk %}" class="text-decoration-none">{{ venda.pk }}</a>
+              </td>
+              <td class="small">{{ venda.data_venda|date:"d/m/Y" }}</td>
+              <td>{{ venda.cliente }}</td>
+              <td class="text-center small">{{ venda.itens.count }}</td>
+              <td class="text-end fw-semibold">R$ {{ venda.valor_total|floatformat:"2g" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">Nenhuma venda no período.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Por vendedor -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small">Por vendedor</div>
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Vendedor</th><th class="text-center">Qtd</th><th class="text-end">Total</th></tr>
+        </thead>
+        <tbody>
+          {% for v in por_vendedor %}
+          <tr>
+            <td class="small">
+              {{ v.vendedor__first_name }} {{ v.vendedor__last_name|default:v.vendedor__username }}
+            </td>
+            <td class="text-center small">{{ v.qtd }}</td>
+            <td class="text-end small fw-semibold">R$ {{ v.total|floatformat:"2g" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="text-center text-muted py-3 small">—</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

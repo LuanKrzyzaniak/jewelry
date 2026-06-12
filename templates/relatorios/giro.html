@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Giro de Estoque — Joalheria{% endblock %}
+{% block breadcrumb %}Gerência / Relatórios / Giro de Estoque{% endblock %}
+
+{% block content %}
+<h4 class="fw-semibold mb-4">Giro de Estoque</h4>
+
+<form method="get" class="card border-0 shadow-sm p-3 mb-4">
+  <div class="row g-3 align-items-end">
+    <div class="col-auto">
+      <label class="form-label small fw-semibold mb-1">De</label>
+      <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-auto">
+      <label class="form-label small fw-semibold mb-1">Até</label>
+      <input type="date" name="fim" value="{{ fim|date:'Y-m-d' }}" class="form-control form-control-sm">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-warning btn-sm">Filtrar</button>
+    </div>
+  </div>
+</form>
+
+<!-- Resumos lado a lado -->
+<div class="row g-4 mb-4">
+
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent fw-semibold small">Saídas por liga</div>
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Liga</th><th class="text-center">Saídas</th><th class="text-center">Estoque</th></tr>
+        </thead>
+        <tbody>
+          {% for liga, dados in por_liga %}
+          <tr>
+            <td class="small fw-medium">{{ liga }}</td>
+            <td class="text-center">
+              {% if dados.saida > 0 %}<span class="badge bg-warning text-dark">{{ dados.saida }}</span>
+              {% else %}<span class="text-muted small">0</span>{% endif %}
+            </td>
+            <td class="text-center small">{{ dados.estoque }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="text-center text-muted py-3 small">Sem dados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent fw-semibold small">Saídas por tipo de produto</div>
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Tipo</th><th class="text-center">Saídas</th><th class="text-center">Estoque</th></tr>
+        </thead>
+        <tbody>
+          {% for tipo, dados in por_tipo %}
+          <tr>
+            <td class="small fw-medium">{{ tipo }}</td>
+            <td class="text-center">
+              {% if dados.saida > 0 %}<span class="badge bg-warning text-dark">{{ dados.saida }}</span>
+              {% else %}<span class="text-muted small">0</span>{% endif %}
+            </td>
+            <td class="text-center small">{{ dados.estoque }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="text-center text-muted py-3 small">Sem dados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Giro por produto -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent fw-semibold small">Giro por produto (ordenado por saída)</div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Produto</th>
+          <th>Liga</th>
+          <th>Tipo</th>
+          <th class="text-center">Saídas no período</th>
+          <th class="text-center">Estoque atual</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for produto in produtos %}
+        <tr>
+          <td>
+            <a href="{% url 'catalogo:produto_detail' produto.pk %}" class="text-decoration-none small fw-medium">
+              {{ produto.nome }}
+            </a>
+          </td>
+          <td class="small text-muted">{{ produto.liga|default:"—" }}</td>
+          <td class="small text-muted">{{ produto.tipo|default:"—" }}</td>
+          <td class="text-center">
+            {% if produto.saida_periodo > 0 %}
+            <span class="badge bg-warning text-dark">{{ produto.saida_periodo }}</span>
+            {% else %}
+            <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if produto.estoque_calc == 0 %}
+            <span class="badge bg-danger">Zerado</span>
+            {% else %}
+            {{ produto.estoque_calc }}
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">Nenhum produto cadastrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

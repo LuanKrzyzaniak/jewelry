@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Catálogo — DJK Joias</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --djk-dark: #1a1a2e;
+      --djk-gold: #c9a84c;
+    }
+
+    body {
+      background: #f5f3ef;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #1a1a2e;
+    }
+
+    /* action bar */
+    .action-bar {
+      background: #fff;
+      border-bottom: 1px solid #e9ecef;
+      padding: .65rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+
+    /* catalog wrapper */
+    #catalogo-content {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* header */
+    .cat-header {
+      background: var(--djk-dark);
+      color: #fff;
+      border-radius: .75rem;
+      padding: 1.6rem 2rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cat-header-logo {
+      display: flex;
+      align-items: center;
+      gap: .85rem;
+    }
+    .cat-gem-icon {
+      width: 2.6rem; height: 2.6rem;
+      background: var(--djk-gold);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.15rem;
+      color: var(--djk-dark);
+      flex-shrink: 0;
+    }
+    .cat-header h1 { font-size: 1.4rem; font-weight: 700; margin: 0; letter-spacing: -.01em; }
+    .cat-header .sub { font-size: .8rem; color: rgba(255,255,255,.55); margin-top: .15rem; }
+    .cat-header .meta { text-align: right; }
+    .cat-header .meta-date { font-size: 1rem; font-weight: 600; color: #fff; }
+    .cat-header .meta-count { font-size: .78rem; color: rgba(255,255,255,.55); margin-top: .1rem; }
+
+    /* cards */
+    .peca-card {
+      background: #fff;
+      border-radius: .6rem;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.07);
+      break-inside: avoid;
+      border-top: 3px solid #dee2e6;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .peca-card.metal-ouro  { border-top-color: var(--djk-gold); }
+    .peca-card.metal-prata { border-top-color: #9ea8b5; }
+    .peca-card.metal-outro { border-top-color: #6ea8fe; }
+
+    .peca-foto {
+      width: 100%; aspect-ratio: 1;
+      object-fit: cover; display: block;
+    }
+    .peca-foto-placeholder {
+      width: 100%; aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.8rem;
+    }
+
+    .peca-info {
+      padding: .85rem .9rem .95rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .peca-codigo {
+      font-size: .67rem;
+      font-family: 'Courier New', monospace;
+      color: #9aa3ad;
+      letter-spacing: .05em;
+      margin-bottom: .2rem;
+    }
+    .peca-nome {
+      font-size: .88rem;
+      font-weight: 700;
+      line-height: 1.25;
+      color: #1a1a2e;
+      margin-bottom: .5rem;
+    }
+    .peca-liga {
+      display: inline-flex;
+      align-items: center;
+      gap: .28rem;
+      font-size: .69rem;
+      color: #6c757d;
+      background: #f1f3f5;
+      border-radius: 2rem;
+      padding: .18rem .55rem;
+      margin-bottom: auto;
+      align-self: flex-start;
+    }
+    .peca-liga-dot {
+      width: .45rem; height: .45rem;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .peca-preco-wrap {
+      margin-top: .7rem;
+      padding-top: .6rem;
+      border-top: 1px solid #f0f0f0;
+    }
+    .peca-preco-label {
+      font-size: .58rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #9aa3ad;
+      margin-bottom: .05rem;
+    }
+    .peca-preco {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #198754;
+    }
+
+    /* footer */
+    .cat-footer {
+      text-align: center;
+      font-size: .75rem;
+      color: #9ea8b5;
+      border-top: 1px solid #e9ecef;
+      padding-top: 1.25rem;
+      margin-top: 2.5rem;
+    }
+
+    /* print */
+    @media print {
+      body { background: #fff; }
+      .action-bar { display: none !important; }
+      #catalogo-content { padding: 0; max-width: 100%; }
+      .cat-header {
+        border-radius: 0;
+        margin: 0 0 1.2rem;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .peca-card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .cat-footer { margin-top: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra de ações -->
+  <div class="action-bar d-flex justify-content-between align-items-center">
+    <a href="{% url 'catalogo:peca_list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Voltar às peças
+    </a>
+    <div class="d-flex align-items-center gap-2">
+      <span class="text-muted small me-1">{{ pecas|length }} peça{{ pecas|length|pluralize }}</span>
+      <button onclick="salvarPDF()" class="btn btn-outline-dark btn-sm">
+        <i class="bi bi-file-earmark-pdf me-1"></i>Salvar PDF
+      </button>
+      <button onclick="window.print()" class="btn btn-warning btn-sm">
+        <i class="bi bi-printer me-1"></i>Imprimir
+      </button>
+    </div>
+  </div>
+
+  <div id="catalogo-content">
+
+    <!-- Cabeçalho -->
+    <div class="cat-header">
+      <div class="cat-header-logo">
+        <div class="cat-gem-icon"><i class="bi bi-gem"></i></div>
+        <div>
+          <h1>DJK Joias</h1>
+          <div class="sub">Catálogo de peças disponíveis</div>
+        </div>
+      </div>
+      <div class="meta">
+        {% load static %}
+        <div class="meta-date">{% now "d/m/Y" %}</div>
+        <div class="meta-count">{{ pecas|length }} peça{{ pecas|length|pluralize }}</div>
+      </div>
+    </div>
+
+    <!-- Grade -->
+    {% if pecas %}
+    <div class="row g-3">
+      {% for peca in pecas %}
+      {% with metal=peca.produto.liga.metal.simbolo|default:"" %}
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="peca-card
+          {% if metal == 'XAU' %}metal-ouro
+          {% elif metal == 'XAG' %}metal-prata
+          {% elif peca.produto.liga %}metal-outro{% endif %}">
+
+          {% with foto=peca.foto_principal %}
+          {% if foto %}
+          <img src="{{ foto.imagem.url }}" class="peca-foto" alt="{{ peca.codigo }}">
+          {% else %}
+          <div class="peca-foto-placeholder"
+               style="background:{% if metal == 'XAU' %}linear-gradient(135deg,#fffde7,#fff3cd){% elif metal == 'XAG' %}linear-gradient(135deg,#f5f5f5,#e0e0e0){% elif peca.produto.liga %}linear-gradient(135deg,#e3f2fd,#bbdefb){% else %}linear-gradient(135deg,#f8f9fa,#e9ecef){% endif %}">
+            <i class="bi bi-gem"
+               style="color:{% if metal == 'XAU' %}#c9a84c{% elif metal == 'XAG' %}#9ea8b5{% elif peca.produto.liga %}#6ea8fe{% else %}#ced4da{% endif %};opacity:.65"></i>
+          </div>
+          {% endif %}
+          {% endwith %}
+
+          <div class="peca-info">
+            <div class="peca-codigo">{{ peca.codigo }}</div>
+            <div class="peca-nome">{{ peca.produto.nome }}</div>
+            {% if peca.produto.liga %}
+            <div class="peca-liga">
+              <span class="peca-liga-dot"
+                    style="background:{% if metal == 'XAU' %}#c9a84c{% elif metal == 'XAG' %}#9ea8b5{% else %}#6ea8fe{% endif %}"></span>
+              {{ peca.produto.liga.nome }}
+            </div>
+            {% endif %}
+            <div class="peca-preco-wrap">
+              <div class="peca-preco-label">Preço sugerido</div>
+              <div class="peca-preco">R$ {{ peca.preco_sugerido|floatformat:"2g" }}</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      {% endwith %}
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-images fs-1 d-block mb-3 opacity-25"></i>
+      Nenhuma peça selecionada.
+    </div>
+    {% endif %}
+
+    <div class="cat-footer">
+      DJK Joias &mdash; documento gerado em {% now "d/m/Y \à\s H:i" %}
+    </div>
+
+  </div>
+
+  <script>
+    function salvarPDF() {
+      const win = window.open('', '_blank');
+      win.document.write('<!DOCTYPE html><html><head>'
+        + '<title>Catálogo — DJK Joias</title>'
+        + document.head.innerHTML
+        + '</head><body>'
+        + document.getElementById('catalogo-content').outerHTML
+        + '<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();}}<\/script>'
+        + '</body></html>');
+      win.document.close();
+    }
+  </script>
+
+</body>
+</html>

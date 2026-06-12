@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ produto.nome }} — Joalheria{% endblock %}
+{% block breadcrumb %}Catálogo / <a href="{% url 'catalogo:produto_list' %}">Produtos</a> / {{ produto.nome }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-start justify-content-between mb-4">
+  <div>
+    <h4 class="fw-semibold mb-1">{{ produto.nome }}</h4>
+    <span class="text-muted small">{{ produto.liga }}</span>
+  </div>
+  {% if user.is_gerente %}
+  <div class="d-flex gap-2">
+    <a href="{% url 'catalogo:produto_update' produto.pk %}" class="btn btn-outline-secondary">
+      <i class="bi bi-pencil me-1"></i>Editar
+    </a>
+    <a href="{% url 'catalogo:produto_delete' produto.pk %}" class="btn btn-outline-danger">
+      <i class="bi bi-trash me-1"></i>Excluir
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+
+  <!-- Dados do produto -->
+  <div class="col-md-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent fw-semibold small">Dados do produto</div>
+      <div class="card-body">
+        <dl class="row small mb-0">
+          {% if produto.liga %}
+          <dt class="col-6 text-muted">Liga</dt>
+          <dd class="col-6">{{ produto.liga }}</dd>
+
+          <dt class="col-6 text-muted">Metal</dt>
+          <dd class="col-6">{{ produto.liga.metal }}</dd>
+          {% endif %}
+
+          {% if produto.tipo %}
+          <dt class="col-6 text-muted">Tipo</dt>
+          <dd class="col-6">{{ produto.tipo }}</dd>
+          {% endif %}
+
+          <dt class="col-6 text-muted">Estoque atual</dt>
+          <dd class="col-6">
+            {% with estoque=produto.estoque_atual %}
+            {% if estoque == 0 %}
+            <span class="badge bg-danger">Zerado</span>
+            {% else %}
+            <strong>{{ estoque }}</strong> un.
+            {% endif %}
+            {% endwith %}
+          </dd>
+        </dl>
+        {% if produto.descricao %}
+        <hr class="my-3">
+        <p class="small text-muted mb-0">{{ produto.descricao }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
