@@ -74,8 +74,13 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div class="d-flex gap-2 mb-3">
-          <input type="search" id="searchPeca" class="form-control" placeholder="Buscar por código ou nome…">
+        <div class="d-flex gap-2 mb-2">
+          <div class="position-relative flex-grow-1">
+            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"></i>
+            <input type="search" id="searchPeca" class="form-control ps-4" style="padding-right:2rem"
+                   placeholder="Buscar por código, nome, tipo ou liga…" autocomplete="off">
+            <button type="button" id="btnLimparBusca" class="btn-close position-absolute top-50 end-0 translate-middle-y me-2 d-none" aria-label="Limpar"></button>
+          </div>
           <select id="filtroTipo" class="form-select" style="max-width:200px">
             <option value="">Todos os tipos</option>
             {% for tipo in tipos_produto %}
@@ -83,6 +88,7 @@
             {% endfor %}
           </select>
         </div>
+        <p id="contadorResultados" class="text-muted small mb-2"></p>
         <div id="pecaGrid" class="row g-2"></div>
         <p id="semResultados" class="text-center text-muted py-4 d-none">Nenhuma peça encontrada.</p>
       </div>
@@ -101,7 +107,7 @@
   </div>
 </div>
 
-<script id="pecas-data" type="application/json">{{ pecas_json }}</script>
+{{ pecas_json|json_script:"pecas-data" }}
 {% endblock %}
 
 {% block extra_js %}
@@ -155,25 +161,63 @@ function selecionarPeca(p) {
   document.getElementById('btnConfirmarPeca').disabled = false;
 }
 
-function filtrar() {
-  const q = document.getElementById('searchPeca').value.toLowerCase();
+function filtrarLista() {
+  const q = document.getElementById('searchPeca').value.toLowerCase().trim();
   const tipoId = document.getElementById('filtroTipo').value;
-  renderCards(PECAS.filter(p => {
-    const matchQ = !q || p.codigo.toLowerCase().includes(q) || p.nome.toLowerCase().includes(q);
+  return PECAS.filter(p => {
+    const matchQ = !q
+      || p.codigo.toLowerCase().includes(q)
+      || p.nome.toLowerCase().includes(q)
+      || p.tipo.toLowerCase().includes(q)
+      || p.liga.toLowerCase().includes(q);
     const matchT = !tipoId || String(p.tipo_id) === tipoId;
     return matchQ && matchT;
-  }));
+  });
 }
 
-document.getElementById('searchPeca').addEventListener('input', filtrar);
+function filtrar() {
+  const filtradas = filtrarLista();
+  const contador  = document.getElementById('contadorResultados');
+  contador.textContent = filtradas.length === PECAS.length
+    ? `${PECAS.length} peça${PECAS.length === 1 ? '' : 's'} disponível${PECAS.length === 1 ? '' : 'eis'}`
+    : `${filtradas.length} de ${PECAS.length} peças`;
+  renderCards(filtradas);
+
+  const busca = document.getElementById('searchPeca').value;
+  document.getElementById('btnLimparBusca').classList.toggle('d-none', !busca);
+}
+
+const inputBusca = document.getElementById('searchPeca');
+inputBusca.addEventListener('input', filtrar);
 document.getElementById('filtroTipo').addEventListener('change', filtrar);
+
+document.getElementById('btnLimparBusca').addEventListener('click', () => {
+  inputBusca.value = '';
+  filtrar();
+  inputBusca.focus();
+});
+
+// Enter na busca: se sobrou só uma peça, seleciona e já confirma.
+inputBusca.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const filtradas = filtrarLista();
+  if (filtradas.length !== 1) return;
+  selecionarPeca(filtradas[0]);
+  document.getElementById('btnConfirmarPeca').click();
+});
+
 document.getElementById('modalPicker').addEventListener('show.bs.modal', () => {
   selecionada = null;
   document.getElementById('pickerSelecionada').classList.add('d-none');
   document.getElementById('btnConfirmarPeca').disabled = true;
-  document.getElementById('searchPeca').value = '';
+  inputBusca.value = '';
   document.getElementById('filtroTipo').value = '';
-  renderCards(PECAS);
+  filtrar();
+});
+
+document.getElementById('modalPicker').addEventListener('shown.bs.modal', () => {
+  inputBusca.focus();
 });
 
 document.getElementById('btnConfirmarPeca').addEventListener('click', () => {

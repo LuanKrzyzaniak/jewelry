@@ -16,7 +16,7 @@ LIGAS = [
 
 TIPOS_PRODUTO = [
     'Anel', 'Aliança', 'Brinco', 'Colar', 'Corrente',
-    'Pulseira', 'Pingente', 'Bracelete', 'Piercing', 'Relógio', 'Outros',
+    'Pulseira', 'Pingente', 'Bracelete', 'Piercing', 'Outros',
 ]
 
 

@@ -114,17 +114,12 @@ class Produto(models.Model):
     def estoque_atual(self):
         return self.pecas.filter(status=Peca.Status.DISPONIVEL).count()
 
-    @property
-    def is_relogio(self):
-        return bool(self.tipo_id and self.tipo and self.tipo.nome == 'Relógio')
-
 
 class Peca(models.Model):
 
     class Status(models.TextChoices):
         DISPONIVEL = 'DIS', 'Disponível'
         RESERVADA  = 'RES', 'Reservada'
-        CONSIGNADA = 'CON', 'Consignada'
         VENDIDA    = 'VEN', 'Vendida'
         RETIRADA   = 'RET', 'Retirada'   # saiu via movimentação, não venda
 
@@ -140,12 +135,6 @@ class Peca(models.Model):
         max_digits=10, decimal_places=2,
         default=Decimal('0.00'),
         validators=[MinValueValidator(Decimal('0.00'))],
-    )
-    preco_proprio = models.DecimalField(
-        max_digits=10, decimal_places=2,
-        null=True, blank=True,
-        validators=[MinValueValidator(Decimal('0.01'))],
-        help_text='Usado apenas para relógios.',
     )
     observacoes   = models.TextField(blank=True)
     criado_em     = models.DateTimeField(auto_now_add=True)
@@ -167,13 +156,7 @@ class Peca(models.Model):
             Peca.objects.filter(pk=self.pk).update(codigo=self.codigo)
 
     @property
-    def is_relogio(self):
-        return self.produto.is_relogio
-
-    @property
     def preco_sugerido(self):
-        if self.is_relogio:
-            return (self.preco_proprio or Decimal('0.00')).quantize(Decimal('0.01'))
         if not self.produto.liga:
             return self.custo_mao_de_obra.quantize(Decimal('0.01'))
         preco_liga = self.produto.liga.preco_atual

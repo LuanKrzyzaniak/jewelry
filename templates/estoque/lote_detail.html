@@ -4,46 +4,23 @@
 {% block breadcrumb %}Estoque / <a href="{% url 'estoque:lote_list' %}">Lotes</a> / #{{ lote.pk }}{% endblock %}
 
 {% block content %}
-<div class="d-flex align-items-start justify-content-between mb-4">
-  <div>
-    <h4 class="fw-semibold mb-1">
-      Lote #{{ lote.pk }}
-      {% if lote.tipo == 'ENT' %}
-      <span class="badge bg-success-subtle text-success ms-1">Entrada</span>
-      {% else %}
-      <span class="badge bg-danger-subtle text-danger ms-1">Saída</span>
-      {% endif %}
-      {% if lote.finalizado %}
-      <span class="badge bg-secondary ms-1">Finalizado</span>
-      {% else %}
-      <span class="badge bg-warning text-dark ms-1">Em aberto</span>
-      {% endif %}
-    </h4>
-    <p class="text-muted small mb-0">
-      {{ lote.criado_em|date:"d/m/Y H:i" }} — {{ lote.responsavel.get_full_name|default:lote.responsavel.username }}
-      {% if lote.fornecedor %} &middot; Fornecedor: <strong>{{ lote.fornecedor }}</strong>{% endif %}
-      {% if lote.cliente %} &middot; Cliente: <strong>{{ lote.cliente }}</strong>{% endif %}
-      {% if lote.observacoes %} &middot; {{ lote.observacoes }}{% endif %}
-    </p>
-  </div>
-  {% if not lote.finalizado %}
-  <div class="d-flex gap-2">
-    <form method="post" action="{% url 'estoque:lote_finalizar' lote.pk %}"
-          onsubmit="return confirm('Finalizar lote #{{ lote.pk }}? As movimentações de estoque serão geradas e o lote ficará bloqueado.')">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-success">
-        <i class="bi bi-check-lg me-1"></i>Finalizar lote
-      </button>
-    </form>
-    <form method="post" action="{% url 'estoque:lote_cancelar' lote.pk %}"
-          onsubmit="return confirm('Cancelar e excluir lote #{{ lote.pk }}? Esta ação não pode ser desfeita.')">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-outline-danger">
-        <i class="bi bi-x-lg me-1"></i>Cancelar lote
-      </button>
-    </form>
-  </div>
-  {% endif %}
+<div class="mb-4">
+  <h4 class="fw-semibold mb-1">
+    Lote #{{ lote.pk }}
+    {% if lote.tipo == 'ENT' %}
+    <span class="badge bg-success-subtle text-success ms-1">Entrada</span>
+    {% else %}
+    <span class="badge bg-danger-subtle text-danger ms-1">Saída</span>
+    {% endif %}
+    {% if lote.finalizado %}
+    <span class="badge bg-secondary ms-1">Finalizado</span>
+    {% else %}
+    <span class="badge bg-warning text-dark ms-1">Em aberto</span>
+    {% endif %}
+  </h4>
+  <p class="text-muted small mb-0">
+    {{ lote.criado_em|date:"d/m/Y H:i" }} — {{ lote.responsavel.get_full_name|default:lote.responsavel.username }}
+  </p>
 </div>
 
 <div class="row g-4">
@@ -54,6 +31,11 @@
       <div class="card-header bg-transparent fw-semibold small d-flex align-items-center gap-2">
         {% if lote.tipo == 'ENT' %}Produtos no lote{% else %}Peças no lote{% endif %}
         <span class="badge bg-secondary">{{ itens|length }}</span>
+        {% if not lote.finalizado and lote.tipo == 'ENT' %}
+        <button type="button" class="btn btn-sm btn-outline-warning ms-auto" data-bs-toggle="modal" data-bs-target="#modalPickerProduto">
+          <i class="bi bi-plus-lg me-1"></i>Adicionar produto
+        </button>
+        {% endif %}
         {% if not lote.finalizado and lote.tipo == 'SAI' %}
         <button type="button" class="btn btn-sm btn-outline-warning ms-auto" data-bs-toggle="modal" data-bs-target="#modalPicker">
           <i class="bi bi-plus-lg me-1"></i>Adicionar peça
@@ -61,16 +43,22 @@
         {% endif %}
       </div>
 
+      {% if form.errors %}
+      <div class="alert alert-danger py-2 small mx-3 mt-3 mb-0">
+        {% for field in form %}{% for error in field.errors %}{{ error }} {% endfor %}{% endfor %}
+        {% for error in form.non_field_errors %}{{ error }} {% endfor %}
+      </div>
+      {% endif %}
+
       {% if lote.tipo == 'ENT' %}
-      <!-- Tabela de entrada -->
+      <!-- Tabela de entrada (uma linha por peça) -->
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
             <th>Produto</th>
             <th>Tipo</th>
-            <th class="text-center">Qtd</th>
-            <th class="text-center">Peso/peça (g)</th>
-            <th class="text-center">Mão de obra</th>
+            <th style="width:130px">Peso (g)</th>
+            <th style="width:150px">Mão de obra (R$)</th>
             {% if not lote.finalizado %}<th></th>{% endif %}
           </tr>
         </thead>
@@ -79,21 +67,31 @@
           <tr>
             <td class="fw-medium small">{{ item.produto.nome }}</td>
             <td class="small text-muted">{{ item.produto.tipo|default:"—" }}</td>
-            <td class="text-center">{{ item.quantidade }}</td>
-            <td class="text-center small text-muted">{{ item.peso_padrao }} g</td>
-            <td class="text-center small text-muted">R$ {{ item.custo_mao_de_obra|floatformat:"2g" }}</td>
             {% if not lote.finalizado %}
+            <td colspan="2">
+              <form method="post" action="{% url 'estoque:lote_item_atualizar' lote.pk item.pk %}" class="d-flex gap-1">
+                {% csrf_token %}
+                <input type="text" name="peso_padrao" value="{{ item.peso_padrao|floatformat:'3' }}"
+                       class="form-control form-control-sm" style="max-width:90px" data-mask="decimal-3">
+                <input type="text" name="custo_mao_de_obra" value="{{ item.custo_mao_de_obra|floatformat:'2' }}"
+                       class="form-control form-control-sm" style="max-width:90px" data-mask="decimal-2">
+                <button type="submit" class="btn btn-sm btn-outline-secondary flex-shrink-0"><i class="bi bi-check"></i></button>
+              </form>
+            </td>
             <td class="text-end">
               <form method="post" action="{% url 'estoque:lote_item_remover' lote.pk item.pk %}" class="d-inline">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
               </form>
             </td>
+            {% else %}
+            <td class="small text-muted">{{ item.peso_padrao }} g</td>
+            <td class="small text-muted">R$ {{ item.custo_mao_de_obra|floatformat:"2g" }}</td>
             {% endif %}
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="text-center text-muted py-3 small">Nenhum produto adicionado ainda.</td>
+            <td colspan="{% if lote.finalizado %}4{% else %}5{% endif %}" class="text-center text-muted py-3 small">Nenhum produto adicionado ainda.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -143,65 +141,130 @@
     </div>
   </div>
 
-  <!-- Formulário de adição (apenas ENT e não finalizado) -->
-  {% if not lote.finalizado and lote.tipo == 'ENT' %}
+  <!-- Resumo -->
   <div class="col-md-4">
     <div class="card border-0 shadow-sm">
-      <div class="card-header bg-transparent fw-semibold small">Adicionar produto</div>
+      <div class="card-header bg-transparent fw-semibold small">Resumo</div>
       <div class="card-body">
-        <form method="post" action="{% url 'estoque:lote_item_adicionar' lote.pk %}" novalidate>
-          {% csrf_token %}
-
-          {% if form.non_field_errors %}
-          <div class="alert alert-danger py-2 small mb-3">
-            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
-          </div>
+        <dl class="row small mb-0">
+          {% if lote.fornecedor %}
+          <dt class="col-7 text-muted">Fornecedor</dt>
+          <dd class="col-5">{{ lote.fornecedor }}</dd>
           {% endif %}
 
-          <div class="mb-2">
-            <label class="form-label small fw-semibold">Filtrar por tipo</label>
-            <select id="filtro-tipo" class="form-select form-select-sm">
-              <option value="">Todos</option>
-              {% for tipo in tipos_produto %}
-              <option value="{{ tipo.pk }}">{{ tipo.nome }}</option>
-              {% endfor %}
-            </select>
-          </div>
+          {% if lote.cliente %}
+          <dt class="col-7 text-muted">Cliente</dt>
+          <dd class="col-5">{{ lote.cliente }}</dd>
+          {% endif %}
 
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">{{ form.produto.label }} <span class="text-danger">*</span></label>
-            {{ form.produto }}
-            {% for error in form.produto.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-          </div>
+          <dt class="col-7 text-muted">Responsável</dt>
+          <dd class="col-5">{{ lote.responsavel.get_full_name|default:lote.responsavel.username }}</dd>
 
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">{{ form.quantidade.label }} <span class="text-danger">*</span></label>
-            {{ form.quantidade }}
-            {% for error in form.quantidade.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-          </div>
+          {% if lote.tipo == 'ENT' %}
+          <dt class="col-7 fw-semibold">Peças a criar</dt>
+          <dd class="col-5 fw-bold fs-5 text-success mb-0">{{ total_pecas }}</dd>
+          {% else %}
+          <dt class="col-7 fw-semibold">Peças no lote</dt>
+          <dd class="col-5 fw-bold fs-5 text-success mb-0">{{ itens|length }}</dd>
+          {% endif %}
+        </dl>
+        {% if lote.observacoes %}
+        <hr class="my-3">
+        <p class="small text-muted mb-0">{{ lote.observacoes }}</p>
+        {% endif %}
+      </div>
+    </div>
 
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">{{ form.peso_padrao.label }} <span class="text-danger">*</span></label>
-            {{ form.peso_padrao }}
-            {% for error in form.peso_padrao.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-          </div>
+    {% if not lote.finalizado %}
+    <div class="mt-3 d-flex flex-column gap-2">
+      <form method="post" action="{% url 'estoque:lote_finalizar' lote.pk %}"
+            onsubmit="return confirm('Finalizar lote #{{ lote.pk }}? As movimentações de estoque serão geradas e o lote ficará bloqueado.')">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success btn-sm w-100">
+          <i class="bi bi-check-lg me-1"></i>Finalizar lote
+        </button>
+      </form>
+      <form method="post" action="{% url 'estoque:lote_cancelar' lote.pk %}"
+            onsubmit="return confirm('Cancelar e excluir lote #{{ lote.pk }}? Esta ação não pode ser desfeita.')">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+          <i class="bi bi-x-lg me-1"></i>Cancelar lote
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
 
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">{{ form.custo_mao_de_obra.label }} <span class="text-danger">*</span></label>
-            {{ form.custo_mao_de_obra }}
-            {% for error in form.custo_mao_de_obra.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-          </div>
+</div>
 
-          <button type="submit" class="btn btn-warning w-100">
-            <i class="bi bi-plus-lg me-1"></i>Adicionar
+<!-- ── Modal picker de produto (apenas ENT) ──────────────────────────────── -->
+{% if not lote.finalizado and lote.tipo == 'ENT' %}
+<div class="modal fade" id="modalPickerProduto" tabindex="-1" aria-labelledby="modalPickerProdutoLabel">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalPickerProdutoLabel">Selecionar Produto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex gap-2 mb-2">
+          <div class="position-relative flex-grow-1">
+            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"></i>
+            <input type="search" id="searchProduto" class="form-control ps-4"
+                   placeholder="Buscar por nome, tipo ou liga…" autocomplete="off">
+            <button type="button" id="btnLimparBuscaProduto" class="btn-close position-absolute top-50 end-0 translate-middle-y me-2 d-none" aria-label="Limpar"></button>
+          </div>
+          <select id="filtroTipoProduto" class="form-select" style="max-width:200px">
+            <option value="">Todos os tipos</option>
+            {% for tipo in tipos_produto %}
+            <option value="{{ tipo.pk }}">{{ tipo.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <p id="contadorResultadosProduto" class="text-muted small mb-2"></p>
+        <div id="produtoGrid" class="row g-2"></div>
+        <p id="semResultadosProduto" class="text-center text-muted py-4 d-none">Nenhum produto encontrado.</p>
+      </div>
+      <div class="modal-footer justify-content-between flex-wrap">
+        <div id="produtoSelecionado" class="text-muted small d-none w-100 mb-2">
+          <div class="mb-2">Selecionado: <strong id="produtoSelecionadoNome"></strong></div>
+          <div class="row g-2">
+            <div class="col-4">
+              <label class="form-label small mb-1">Quantidade</label>
+              <input type="number" id="inputQuantidade" class="form-control form-control-sm" min="1" value="1">
+            </div>
+            <div class="col-4">
+              <label class="form-label small mb-1">Peso por peça (g)</label>
+              <input type="text" id="inputPeso" class="form-control form-control-sm" data-mask="decimal-3" placeholder="0,000">
+            </div>
+            <div class="col-4">
+              <label class="form-label small mb-1">Mão de obra/peça (R$)</label>
+              <input type="text" id="inputCusto" class="form-control form-control-sm" data-mask="decimal-2" placeholder="0,00">
+            </div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 ms-auto">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" id="btnConfirmarProduto" class="btn btn-warning" disabled>
+            <i class="bi bi-check-lg me-1"></i>Adicionar ao lote
           </button>
-        </form>
+        </div>
       </div>
     </div>
   </div>
-  {% endif %}
-
 </div>
+
+<!-- Form hidden para POST do produto selecionado -->
+<form method="post" action="{% url 'estoque:lote_item_adicionar' lote.pk %}" id="formAdicionarProduto">
+  {% csrf_token %}
+  <input type="hidden" name="produto" id="hiddenProdutoId">
+  <input type="hidden" name="quantidade" id="hiddenQuantidade">
+  <input type="hidden" name="peso_padrao" id="hiddenPeso">
+  <input type="hidden" name="custo_mao_de_obra" id="hiddenCusto">
+</form>
+
+{{ produtos_json|json_script:"produtos-data" }}
+{% endif %}
 
 <!-- ── Modal picker de peças (apenas SAI) ────────────────────────────────── -->
 {% if not lote.finalizado and lote.tipo == 'SAI' %}
@@ -213,8 +276,13 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div class="d-flex gap-2 mb-3">
-          <input type="search" id="searchPeca" class="form-control" placeholder="Buscar por código ou nome…">
+        <div class="d-flex gap-2 mb-2">
+          <div class="position-relative flex-grow-1">
+            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"></i>
+            <input type="search" id="searchPeca" class="form-control ps-4" style="padding-right:2rem"
+                   placeholder="Buscar por código, nome, tipo ou liga…" autocomplete="off">
+            <button type="button" id="btnLimparBusca" class="btn-close position-absolute top-50 end-0 translate-middle-y me-2 d-none" aria-label="Limpar"></button>
+          </div>
           <select id="filtroTipo" class="form-select" style="max-width:200px">
             <option value="">Todos os tipos</option>
             {% for tipo in tipos_produto %}
@@ -222,6 +290,7 @@
             {% endfor %}
           </select>
         </div>
+        <p id="contadorResultados" class="text-muted small mb-2"></p>
         <div id="pecaGrid" class="row g-2"></div>
         <p id="semResultados" class="text-center text-muted py-4 d-none">Nenhuma peça encontrada.</p>
       </div>
@@ -246,24 +315,147 @@
   <input type="hidden" name="peca_id" id="hiddenPecaId">
 </form>
 
-<script id="pecas-data" type="application/json">{{ pecas_json }}</script>
+{{ pecas_json|json_script:"pecas-data" }}
 {% endif %}
 {% endblock %}
 
 {% block extra_js %}
 {% if not lote.finalizado and lote.tipo == 'ENT' %}
 <script>
-const selFiltroTipo = document.getElementById('filtro-tipo');
-const selProduto    = document.querySelector('[name="produto"]');
-function filtrar() {
-  const tipoId = selFiltroTipo.value;
-  Array.from(selProduto.options).forEach(opt => {
-    if (!opt.value) return;
-    opt.hidden = tipoId ? opt.dataset.tipo !== tipoId : false;
+const PRODUTOS = JSON.parse(document.getElementById('produtos-data').textContent);
+const TIPO_CFG_PROD = {
+  'Anel':      { icon: 'bi-circle',       color: '#f9a825' },
+  'Aliança':   { icon: 'bi-infinity',     color: '#e91e63' },
+  'Brinco':    { icon: 'bi-gem',          color: '#388e3c' },
+  'Colar':     { icon: 'bi-link-45deg',   color: '#f57c00' },
+  'Corrente':  { icon: 'bi-link',         color: '#616161' },
+  'Pulseira':  { icon: 'bi-watch',        color: '#1976d2' },
+  'Pingente':  { icon: 'bi-tag',          color: '#7b1fa2' },
+  'Bracelete': { icon: 'bi-watch',        color: '#3949ab' },
+  'Piercing':  { icon: 'bi-circle-fill',  color: '#e64a19' },
+};
+const DEF_CFG_PROD = { icon: 'bi-box', color: '#9e9e9e' };
+
+let produtoSelecionado = null;
+
+function renderCardsProduto(lista) {
+  const grid = document.getElementById('produtoGrid');
+  const sem  = document.getElementById('semResultadosProduto');
+  grid.innerHTML = '';
+  if (!lista.length) { sem.classList.remove('d-none'); return; }
+  sem.classList.add('d-none');
+  lista.forEach(p => {
+    const cfg = TIPO_CFG_PROD[p.tipo] || DEF_CFG_PROD;
+    const col = document.createElement('div');
+    col.className = 'col-6 col-md-3 col-lg-2';
+    col.innerHTML = `
+      <div class="card h-100 produto-card border-2" data-id="${p.id}" style="cursor:pointer;transition:border-color .15s">
+        <div class="card-body p-2 text-center">
+          <i class="bi ${cfg.icon}" style="font-size:1.8rem;color:${cfg.color}"></i>
+          <div class="small fw-semibold text-truncate mt-1" title="${p.nome}">${p.nome}</div>
+          ${p.liga ? `<div class="small text-muted">${p.liga}</div>` : '<div class="small text-muted">Sem liga</div>'}
+        </div>
+      </div>`;
+    col.querySelector('.produto-card').addEventListener('click', () => selecionarProduto(p));
+    grid.appendChild(col);
   });
-  if (selProduto.selectedOptions[0]?.hidden) selProduto.value = '';
+  if (produtoSelecionado) {
+    const c = grid.querySelector(`.produto-card[data-id="${produtoSelecionado.id}"]`);
+    if (c) c.classList.add('border-warning');
+  }
 }
-selFiltroTipo.addEventListener('change', filtrar);
+
+function selecionarProduto(p) {
+  document.querySelectorAll('.produto-card').forEach(c => c.classList.remove('border-warning'));
+  const card = document.querySelector(`.produto-card[data-id="${p.id}"]`);
+  if (card) card.classList.add('border-warning');
+  produtoSelecionado = p;
+  document.getElementById('produtoSelecionado').classList.remove('d-none');
+  document.getElementById('produtoSelecionadoNome').textContent = p.liga ? `${p.nome} — ${p.liga}` : p.nome;
+  document.getElementById('btnConfirmarProduto').disabled = false;
+  document.getElementById('inputPeso').focus();
+}
+
+function filtrarListaProduto() {
+  const q = document.getElementById('searchProduto').value.toLowerCase().trim();
+  const tipoId = document.getElementById('filtroTipoProduto').value;
+  return PRODUTOS.filter(p => {
+    const matchQ = !q
+      || p.nome.toLowerCase().includes(q)
+      || p.tipo.toLowerCase().includes(q)
+      || p.liga.toLowerCase().includes(q);
+    const matchT = !tipoId || String(p.tipo_id) === tipoId;
+    return matchQ && matchT;
+  });
+}
+
+function filtrarProduto() {
+  const filtradas = filtrarListaProduto();
+  const contador  = document.getElementById('contadorResultadosProduto');
+  contador.textContent = filtradas.length === PRODUTOS.length
+    ? `${PRODUTOS.length} produto${PRODUTOS.length === 1 ? '' : 's'} cadastrado${PRODUTOS.length === 1 ? '' : 's'}`
+    : `${filtradas.length} de ${PRODUTOS.length} produtos`;
+  renderCardsProduto(filtradas);
+
+  const busca = document.getElementById('searchProduto').value;
+  document.getElementById('btnLimparBuscaProduto').classList.toggle('d-none', !busca);
+}
+
+const inputBuscaProduto = document.getElementById('searchProduto');
+inputBuscaProduto.addEventListener('input', filtrarProduto);
+document.getElementById('filtroTipoProduto').addEventListener('change', filtrarProduto);
+
+document.getElementById('btnLimparBuscaProduto').addEventListener('click', () => {
+  inputBuscaProduto.value = '';
+  filtrarProduto();
+  inputBuscaProduto.focus();
+});
+
+inputBuscaProduto.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const filtradas = filtrarListaProduto();
+  if (filtradas.length === 1) selecionarProduto(filtradas[0]);
+});
+
+document.getElementById('modalPickerProduto').addEventListener('show.bs.modal', () => {
+  produtoSelecionado = null;
+  document.getElementById('produtoSelecionado').classList.add('d-none');
+  document.getElementById('btnConfirmarProduto').disabled = true;
+  document.getElementById('inputQuantidade').value = '1';
+  document.getElementById('inputPeso').value = '';
+  document.getElementById('inputCusto').value = '';
+  inputBuscaProduto.value = '';
+  document.getElementById('filtroTipoProduto').value = '';
+  filtrarProduto();
+});
+
+document.getElementById('modalPickerProduto').addEventListener('shown.bs.modal', () => {
+  inputBuscaProduto.focus();
+});
+
+document.getElementById('btnConfirmarProduto').addEventListener('click', () => {
+  if (!produtoSelecionado) return;
+  const quantidade = document.getElementById('inputQuantidade').value;
+  const peso        = document.getElementById('inputPeso').value.replace(',', '.');
+  const custo        = document.getElementById('inputCusto').value.replace(',', '.') || '0';
+  if (!quantidade || parseInt(quantidade) < 1) {
+    document.getElementById('inputQuantidade').classList.add('is-invalid');
+    return;
+  }
+  if (!peso || parseFloat(peso) <= 0) {
+    document.getElementById('inputPeso').classList.add('is-invalid');
+    document.getElementById('inputPeso').focus();
+    return;
+  }
+  document.getElementById('inputQuantidade').classList.remove('is-invalid');
+  document.getElementById('inputPeso').classList.remove('is-invalid');
+  document.getElementById('hiddenProdutoId').value = produtoSelecionado.id;
+  document.getElementById('hiddenQuantidade').value = quantidade;
+  document.getElementById('hiddenPeso').value = peso;
+  document.getElementById('hiddenCusto').value = custo;
+  document.getElementById('formAdicionarProduto').submit();
+});
 </script>
 {% endif %}
 
@@ -318,25 +510,63 @@ function selecionarPeca(p) {
   document.getElementById('btnConfirmarPeca').disabled = false;
 }
 
-function filtrar() {
-  const q = document.getElementById('searchPeca').value.toLowerCase();
+function filtrarLista() {
+  const q = document.getElementById('searchPeca').value.toLowerCase().trim();
   const tipoId = document.getElementById('filtroTipo').value;
-  renderCards(PECAS.filter(p => {
-    const matchQ = !q || p.codigo.toLowerCase().includes(q) || p.nome.toLowerCase().includes(q);
+  return PECAS.filter(p => {
+    const matchQ = !q
+      || p.codigo.toLowerCase().includes(q)
+      || p.nome.toLowerCase().includes(q)
+      || p.tipo.toLowerCase().includes(q)
+      || p.liga.toLowerCase().includes(q);
     const matchT = !tipoId || String(p.tipo_id) === tipoId;
     return matchQ && matchT;
-  }));
+  });
 }
 
-document.getElementById('searchPeca').addEventListener('input', filtrar);
+function filtrar() {
+  const filtradas = filtrarLista();
+  const contador  = document.getElementById('contadorResultados');
+  contador.textContent = filtradas.length === PECAS.length
+    ? `${PECAS.length} peça${PECAS.length === 1 ? '' : 's'} disponível${PECAS.length === 1 ? '' : 'eis'}`
+    : `${filtradas.length} de ${PECAS.length} peças`;
+  renderCards(filtradas);
+
+  const busca = document.getElementById('searchPeca').value;
+  document.getElementById('btnLimparBusca').classList.toggle('d-none', !busca);
+}
+
+const inputBusca = document.getElementById('searchPeca');
+inputBusca.addEventListener('input', filtrar);
 document.getElementById('filtroTipo').addEventListener('change', filtrar);
+
+document.getElementById('btnLimparBusca').addEventListener('click', () => {
+  inputBusca.value = '';
+  filtrar();
+  inputBusca.focus();
+});
+
+// Enter na busca: se sobrou só uma peça, seleciona e já confirma.
+inputBusca.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const filtradas = filtrarLista();
+  if (filtradas.length !== 1) return;
+  selecionarPeca(filtradas[0]);
+  document.getElementById('btnConfirmarPeca').click();
+});
+
 document.getElementById('modalPicker').addEventListener('show.bs.modal', () => {
   selecionada = null;
   document.getElementById('pickerSelecionada').classList.add('d-none');
   document.getElementById('btnConfirmarPeca').disabled = true;
-  document.getElementById('searchPeca').value = '';
+  inputBusca.value = '';
   document.getElementById('filtroTipo').value = '';
-  renderCards(PECAS);
+  filtrar();
+});
+
+document.getElementById('modalPicker').addEventListener('shown.bs.modal', () => {
+  inputBusca.focus();
 });
 
 document.getElementById('btnConfirmarPeca').addEventListener('click', () => {

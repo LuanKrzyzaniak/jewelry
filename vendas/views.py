@@ -13,7 +13,7 @@ from estoque.models import MovimentacaoEstoque
 from estoque.views import _pecas_disponiveis_json
 from usuarios.mixins import GerenteRequiredMixin
 
-from .forms import ClienteForm, FornecedorForm, ItemVendaForm, VendaForm
+from .forms import ClienteForm, DescontoForm, FornecedorForm, ItemVendaForm, VendaForm
 from .models import Cliente, Fornecedor, ItemVenda, Venda
 
 
@@ -158,6 +158,7 @@ class VendaDetailView(LoginRequiredMixin, DetailView):
         ja_na_venda = list(venda.itens.values_list('peca_id', flat=True))
         ctx['pecas_json']    = _pecas_disponiveis_json(excluir_ids=ja_na_venda)
         ctx['tipos_produto'] = TipoProduto.objects.order_by('nome')
+        ctx['desconto_form'] = DescontoForm(initial={'tipo': 'valor', 'valor': venda.desconto_total})
         return ctx
 
 
@@ -189,6 +190,39 @@ class VendaUpdateView(LoginRequiredMixin, UpdateView):
 
 
 # ---------------------------------------------------------------------------
+# Desconto — editado via POST na tela de detalhe da venda
+# ---------------------------------------------------------------------------
+
+def venda_desconto_atualizar(request, pk):
+    venda = get_object_or_404(Venda, pk=pk)
+
+    if venda.status == Venda.Status.CANCELADA:
+        messages.error(request, 'Não é possível alterar o desconto de uma venda cancelada.')
+        return redirect('vendas:venda_detail', pk=pk)
+
+    if request.method != 'POST':
+        return redirect('vendas:venda_detail', pk=pk)
+
+    form = DescontoForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, 'Desconto inválido.')
+        return redirect('vendas:venda_detail', pk=pk)
+
+    valor = form.cleaned_data['valor']
+    if form.cleaned_data['tipo'] == 'percentual':
+        subtotal = sum((item.subtotal for item in venda.itens.all()), Decimal('0.00'))
+        desconto = (subtotal * valor / Decimal('100')).quantize(Decimal('0.01'))
+    else:
+        desconto = valor
+
+    venda.desconto_total = desconto
+    venda.save(update_fields=['desconto_total'])
+    venda.recalcular_total()
+    messages.success(request, 'Desconto atualizado.')
+    return redirect('vendas:venda_detail', pk=pk)
+
+
+# ---------------------------------------------------------------------------
 # Item de Venda — adicionado via POST na tela de detalhe da venda
 # ---------------------------------------------------------------------------
 
@@ -207,15 +241,14 @@ def item_adicionar(request, venda_pk):
         messages.error(request, 'Dados inválidos.')
         return redirect('vendas:venda_detail', pk=venda_pk)
 
-    peca  = get_object_or_404(Peca, pk=form.cleaned_data['peca_id'], status=Peca.Status.DISPONIVEL)
-    preco = form.cleaned_data['preco_unitario_pago']
+    peca = get_object_or_404(Peca, pk=form.cleaned_data['peca_id'], status=Peca.Status.DISPONIVEL)
 
     if ItemVenda.objects.filter(venda=venda, peca=peca).exists():
         messages.error(request, f'A peça {peca.codigo} já está nesta venda.')
         return redirect('vendas:venda_detail', pk=venda_pk)
 
     with transaction.atomic():
-        ItemVenda.objects.create(venda=venda, peca=peca, preco_unitario_pago=preco)
+        ItemVenda.objects.create(venda=venda, peca=peca, preco_unitario_pago=peca.preco_sugerido)
         peca.status = Peca.Status.VENDIDA
         peca.save(update_fields=['status'])
         MovimentacaoEstoque.objects.create(

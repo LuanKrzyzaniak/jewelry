@@ -46,37 +46,49 @@ class FornecedorForm(forms.ModelForm):
 class VendaForm(forms.ModelForm):
     class Meta:
         model  = Venda
-        fields = ['cliente', 'status', 'desconto_total', 'observacoes']
+        fields = ['cliente', 'status', 'observacoes']
         widgets = {
-            'cliente':        forms.Select(attrs={'class': 'form-select'}),
-            'status':         forms.Select(attrs={'class': 'form-select'}),
-            'desconto_total': forms.TextInput(attrs={'class': 'form-control', 'data-mask': 'decimal-2'}),
-            'observacoes':    forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'cliente':     forms.Select(attrs={'class': 'form-select'}),
+            'status':      forms.Select(attrs={'class': 'form-select'}),
+            'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
         labels = {
-            'cliente':        'Cliente',
-            'status':         'Status',
-            'desconto_total': 'Desconto total (R$)',
-            'observacoes':    'Observações',
+            'cliente':     'Cliente',
+            'status':      'Status',
+            'observacoes': 'Observações',
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['cliente'].empty_label      = 'Selecione o cliente'
-        self.fields['status'].empty_label       = None
-        self.fields['desconto_total'].required  = False
-        self.fields['desconto_total'].initial   = '0.00'
+        self.fields['cliente'].empty_label = 'Selecione o cliente'
+        self.fields['status'].empty_label  = None
         self.fields['status'].choices = [
             (v, l) for v, l in Venda.Status.choices if v != Venda.Status.CANCELADA
         ]
 
 
-class ItemVendaForm(forms.Form):
-    """Form para POST de adição de peça à venda."""
-    peca_id             = forms.IntegerField(widget=forms.HiddenInput())
-    preco_unitario_pago = forms.DecimalField(
-        max_digits=12, decimal_places=2,
-        min_value=Decimal('0.01'),
-        widget=forms.TextInput(attrs={'class': 'form-control', 'data-mask': 'decimal-2'}),
-        label='Preço (R$)',
+class DescontoForm(forms.Form):
+    TIPO_CHOICES = [
+        ('valor',       'R$'),
+        ('percentual',  '%'),
+    ]
+    tipo = forms.ChoiceField(
+        choices=TIPO_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select form-select-sm', 'style': 'max-width:70px'}),
     )
+    valor = forms.DecimalField(
+        max_digits=12, decimal_places=2,
+        min_value=Decimal('0.00'),
+        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'data-mask': 'decimal-2'}),
+        label='Desconto',
+    )
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('tipo') == 'percentual' and cleaned.get('valor') is not None and cleaned['valor'] > 100:
+            self.add_error('valor', 'O percentual não pode ser maior que 100%.')
+        return cleaned
+
+
+class ItemVendaForm(forms.Form):
+    peca_id = forms.IntegerField(widget=forms.HiddenInput())

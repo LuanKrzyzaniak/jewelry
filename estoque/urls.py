@@ -14,6 +14,7 @@ urlpatterns = [
     path('lotes/<int:pk>/',                                 views.LoteDetailView.as_view(), name='lote_detail'),
     path('lotes/<int:lote_pk>/item/adicionar/',             views.lote_item_adicionar,      name='lote_item_adicionar'),
     path('lotes/<int:lote_pk>/item/<int:item_pk>/remover/', views.lote_item_remover,        name='lote_item_remover'),
+    path('lotes/<int:lote_pk>/item/<int:item_pk>/atualizar/', views.lote_item_atualizar,    name='lote_item_atualizar'),
     path('lotes/<int:lote_pk>/finalizar/',                  views.lote_finalizar,           name='lote_finalizar'),
     path('lotes/<int:lote_pk>/cancelar/',                   views.lote_cancelar,            name='lote_cancelar'),
 ]

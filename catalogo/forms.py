@@ -70,43 +70,22 @@ class ProdutoForm(forms.ModelForm):
         self.fields['liga'].empty_label = 'Selecione a liga'
 
     def clean(self):
-        cleaned    = super().clean()
-        tipo       = cleaned.get('tipo')
-        is_relogio = tipo and tipo.nome == 'Relógio'
-        liga_na    = self.data.get('liga_na') == '1'
-        if not is_relogio and not liga_na and not cleaned.get('liga'):
+        cleaned = super().clean()
+        liga_na = self.data.get('liga_na') == '1'
+        if not liga_na and not cleaned.get('liga'):
             self.add_error('liga', 'Selecione a liga ou marque "Não se aplica".')
         return cleaned
-
-
-class ProdutoSelectParaPeca(forms.Select):
-    """Select de produto que inclui data-relogio em cada option para controle JS."""
-
-    def __init__(self, produtos=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._relogio_ids = {
-            str(p.pk) for p in (produtos or [])
-            if p.tipo and p.tipo.nome == 'Relógio'
-        }
-
-    def create_option(self, name, value, label, selected, index, subgroup=None, attrs=None, subindex=None):
-        option = super().create_option(name, value, label, selected, index, subgroup, attrs)
-        val = str(value.value if hasattr(value, 'value') else value)
-        if val in self._relogio_ids:
-            option['attrs']['data-relogio'] = '1'
-        return option
 
 
 class PecaForm(forms.ModelForm):
     class Meta:
         model  = Peca
-        fields = ['produto', 'status', 'peso_gramas', 'custo_mao_de_obra', 'preco_proprio', 'observacoes']
+        fields = ['produto', 'status', 'peso_gramas', 'custo_mao_de_obra', 'observacoes']
         widgets = {
             'produto':           forms.Select(attrs={'class': 'form-select'}),
             'status':            forms.Select(attrs={'class': 'form-select'}),
             'peso_gramas':       forms.TextInput(attrs={'class': 'form-control', 'data-mask': 'decimal-3'}),
             'custo_mao_de_obra': forms.TextInput(attrs={'class': 'form-control', 'data-mask': 'decimal-2'}),
-            'preco_proprio':     forms.TextInput(attrs={'class': 'form-control', 'data-mask': 'decimal-2'}),
             'observacoes':       forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
         labels = {
@@ -114,25 +93,10 @@ class PecaForm(forms.ModelForm):
             'status':            'Status',
             'peso_gramas':       'Peso (g)',
             'custo_mao_de_obra': 'Custo de mão de obra (R$)',
-            'preco_proprio':     'Valor do relógio (R$)',
             'observacoes':       'Observações',
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        produtos = Produto.objects.select_related('tipo').order_by('nome')
-        self.fields['produto'].widget   = ProdutoSelectParaPeca(
-            produtos=produtos,
-            attrs={'class': 'form-select'},
-        )
-        self.fields['produto'].queryset = produtos
+        self.fields['produto'].queryset    = Produto.objects.select_related('tipo').order_by('nome')
         self.fields['produto'].empty_label = 'Selecione o produto'
-
-    def clean(self):
-        cleaned    = super().clean()
-        produto    = cleaned.get('produto')
-        is_relogio = produto and produto.is_relogio
-        if is_relogio:
-            if not cleaned.get('preco_proprio'):
-                self.add_error('preco_proprio', 'Informe o valor do relógio.')
-        return cleaned

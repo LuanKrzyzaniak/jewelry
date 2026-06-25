@@ -165,7 +165,6 @@
           <span class="badge
             {% if peca.status == 'DIS' %}bg-success-subtle text-success border border-success-subtle
             {% elif peca.status == 'RES' %}bg-warning-subtle text-warning-emphasis border border-warning-subtle
-            {% elif peca.status == 'CON' %}bg-info-subtle text-info-emphasis border border-info-subtle
             {% else %}bg-secondary-subtle text-secondary border border-secondary-subtle{% endif %}
             ms-2 flex-shrink-0" style="font-size:.65rem">
             {{ peca.get_status_display }}
@@ -234,6 +233,17 @@
 
 {% block extra_js %}
 <script>
+// ── Busca com auto-submit (debounce) ────────────────────────────────────────
+(() => {
+  const input = document.querySelector('#filtro-form [name="q"]');
+  const form  = document.getElementById('filtro-form');
+  let timer;
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => form.submit(), 400);
+  });
+})();
+
 // ── Placeholders por tipo ──────────────────────────────────────────────────
 const TIPO_CFG = {
   'Anel':      { icon: 'bi-circle',       bg: ['#fffde7','#fff9c4'], color: '#f9a825' },
@@ -245,7 +255,6 @@ const TIPO_CFG = {
   'Pingente':  { icon: 'bi-tag',          bg: ['#f3e5f5','#e1bee7'], color: '#7b1fa2' },
   'Bracelete': { icon: 'bi-watch',        bg: ['#e8eaf6','#c5cae9'], color: '#3949ab' },
   'Piercing':  { icon: 'bi-circle-fill',  bg: ['#fbe9e7','#ffccbc'], color: '#e64a19' },
-  'Relógio':   { icon: 'bi-alarm',        bg: ['#e0f2f1','#b2dfdb'], color: '#00796b' },
   'Outros':    { icon: 'bi-box',          bg: ['#f5f5f5','#e0e0e0'], color: '#757575' },
 };
 const DEF_CFG  = { icon: 'bi-gem', bg: ['#f5f5f5','#e0e0e0'], color: '#9e9e9e' };

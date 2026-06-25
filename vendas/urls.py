@@ -11,6 +11,7 @@ urlpatterns = [
     path('<int:pk>/',                          views.VendaDetailView.as_view(), name='venda_detail'),
     path('<int:pk>/editar/',                   views.VendaUpdateView.as_view(), name='venda_update'),
     path('<int:pk>/cancelar/',                 views.venda_cancelar,            name='venda_cancelar'),
+    path('<int:pk>/desconto/',                 views.venda_desconto_atualizar,  name='venda_desconto_atualizar'),
     path('<int:venda_pk>/itens/adicionar/',    views.item_adicionar,            name='item_adicionar'),
     path('<int:venda_pk>/itens/<int:item_pk>/remover/', views.item_remover,     name='item_remover'),
 

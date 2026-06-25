@@ -1,5 +1,3 @@
-import json
-
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
@@ -7,9 +5,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView
 
-from catalogo.models import Peca, TipoProduto
+from catalogo.models import Peca, Produto, TipoProduto
 
 from .forms import (
+    ItemLotePesoForm,
     LoteForm,
     LoteItemEntradaForm,
     LoteItemSaidaForm,
@@ -170,13 +169,15 @@ class LoteDetailView(LoginRequiredMixin, DetailView):
         lote = self.object
 
         if lote.tipo == LoteMovimentacao.Tipo.ENTRADA:
-            ctx['form']         = LoteItemEntradaForm(lote=lote)
+            ctx['form']          = LoteItemEntradaForm(lote=lote)
             ctx['tipos_produto'] = TipoProduto.objects.order_by('nome')
+            ctx['produtos_json'] = _produtos_json()
             ctx['itens'] = (
                 lote.itens
                 .select_related('produto__liga', 'produto__tipo')
                 .filter(peca__isnull=True)
             )
+            ctx['total_pecas'] = sum(i.quantidade for i in ctx['itens'])
         else:
             itens = (
                 lote.itens
@@ -207,20 +208,28 @@ def lote_item_adicionar(request, lote_pk):
     if lote.tipo == LoteMovimentacao.Tipo.ENTRADA:
         form = LoteItemEntradaForm(lote=lote, data=request.POST)
         if form.is_valid():
-            ItemLote.objects.create(
-                lote=lote,
-                produto=form.cleaned_data['produto'],
-                quantidade=form.cleaned_data['quantidade'],
-                peso_padrao=form.cleaned_data['peso_padrao'],
-                custo_mao_de_obra=form.cleaned_data['custo_mao_de_obra'],
-            )
-            messages.success(request, f'"{form.cleaned_data["produto"]}" adicionado.')
+            produto    = form.cleaned_data['produto']
+            quantidade = form.cleaned_data['quantidade']
+            # Uma linha por peça (não agrupada), para permitir ajustar peso/custo individualmente.
+            ItemLote.objects.bulk_create([
+                ItemLote(
+                    lote=lote,
+                    produto=produto,
+                    quantidade=1,
+                    peso_padrao=form.cleaned_data['peso_padrao'],
+                    custo_mao_de_obra=form.cleaned_data['custo_mao_de_obra'],
+                )
+                for _ in range(quantidade)
+            ])
+            messages.success(request, f'{quantidade}x "{produto}" adicionado(s).')
             return redirect('estoque:lote_detail', pk=lote_pk)
 
         itens = lote.itens.select_related('produto__liga', 'produto__tipo').filter(peca__isnull=True)
         return render(request, 'estoque/lote_detail.html', {
             'lote': lote, 'form': form, 'itens': itens,
-            'tipos_produto': TipoProduto.objects.order_by('nome'),
+            'tipos_produto':  TipoProduto.objects.order_by('nome'),
+            'produtos_json':  _produtos_json(),
+            'total_pecas':    sum(i.quantidade for i in itens),
         })
 
     else:  # SAÍDA
@@ -248,6 +257,27 @@ def lote_item_remover(request, lote_pk, item_pk):
         item.delete()
         messages.success(request, 'Item removido do lote.')
 
+    return redirect('estoque:lote_detail', pk=lote_pk)
+
+
+def lote_item_atualizar(request, lote_pk, item_pk):
+    lote = get_object_or_404(LoteMovimentacao, pk=lote_pk)
+    item = get_object_or_404(ItemLote, pk=item_pk, lote=lote)
+
+    if lote.finalizado:
+        messages.error(request, 'Lote já finalizado.')
+        return redirect('estoque:lote_detail', pk=lote_pk)
+
+    if request.method != 'POST':
+        return redirect('estoque:lote_detail', pk=lote_pk)
+
+    form = ItemLotePesoForm(request.POST, instance=item)
+    if not form.is_valid():
+        messages.error(request, 'Peso ou custo inválido.')
+        return redirect('estoque:lote_detail', pk=lote_pk)
+
+    form.save()
+    messages.success(request, 'Item atualizado.')
     return redirect('estoque:lote_detail', pk=lote_pk)
 
 
@@ -360,4 +390,18 @@ def _pecas_disponiveis_json(excluir_ids=None):
             'preco':    str(p.preco_sugerido),
             'foto_url': foto.imagem.url if foto else None,
         })
-    return json.dumps(resultado, ensure_ascii=False)
+    return resultado
+
+
+def _produtos_json():
+    produtos = Produto.objects.select_related('tipo', 'liga__metal').order_by('nome')
+    return [
+        {
+            'id':      p.pk,
+            'nome':    p.nome,
+            'tipo_id': p.tipo_id or 0,
+            'tipo':    str(p.tipo) if p.tipo else '',
+            'liga':    p.liga.nome if p.liga else '',
+        }
+        for p in produtos
+    ]

@@ -66,8 +66,6 @@ const chkLigaNa    = document.getElementById('chk-liga-na');
 const selectLiga   = document.getElementById('div-liga-select').querySelector('select');
 const hiddenLigaNa = document.getElementById('liga-na-hidden');
 const ligaAsterisk = document.getElementById('liga-asterisk');
-const selectTipo   = document.getElementById('id_tipo');
-const campoLiga    = document.getElementById('div-liga-select').closest('.mb-3');
 
 function aplicarEstadoLiga() {
     selectLiga.disabled        = chkLigaNa.checked;
@@ -76,18 +74,11 @@ function aplicarEstadoLiga() {
     if (chkLigaNa.checked) selectLiga.value = '';
 }
 
-function aplicarEstadoTipo() {
-    const isRelogio = selectTipo.options[selectTipo.selectedIndex]?.text?.trim() === 'Relógio';
-    campoLiga.style.display = isRelogio ? 'none' : '';
-}
-
 chkLigaNa.addEventListener('change', aplicarEstadoLiga);
-selectTipo.addEventListener('change', aplicarEstadoTipo);
 
 if ({{ form.instance.pk|default:'null' }} && !selectLiga.value) {
     chkLigaNa.checked = true;
 }
 aplicarEstadoLiga();
-aplicarEstadoTipo();
 </script>
 {% endblock %}

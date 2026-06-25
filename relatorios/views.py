@@ -42,7 +42,6 @@ def vendas(request):
     valor_total = totais['valor_total'] or 0
     ticket_medio = (valor_total / num_vendas) if num_vendas else 0
 
-    # Resumo por vendedor
     por_vendedor = (
         qs.values('vendedor__first_name', 'vendedor__last_name', 'vendedor__username')
         .annotate(qtd=Count('id'), total=Sum('valor_total'))
@@ -77,7 +76,6 @@ def giro(request):
     )
     saidas_map = {s['produto_id']: s['total_saida'] for s in saidas}
 
-    # Estoque atual de todos os produtos
     produtos = Produto.objects.select_related('liga', 'tipo').annotate(
         estoque_calc=Sum(
             'movimentacoes__quantidade',
@@ -90,11 +88,6 @@ def giro(request):
         )
     ).order_by('tipo__nome', 'nome')
 
-    # Injeta a saída do período em cada produto
-    for produto in produtos:
-        produto.saida_periodo = saidas_map.get(produto.pk, 0)
-
-    # Injeta a saída do período em cada produto
     for produto in produtos:
         produto.saida_periodo = saidas_map.get(produto.pk, 0)
 

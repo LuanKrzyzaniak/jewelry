@@ -27,7 +27,7 @@ LIGAS = [
 
 TIPOS = [
     'Anel', 'Aliança', 'Brinco', 'Colar', 'Corrente',
-    'Pulseira', 'Pingente', 'Bracelete', 'Piercing', 'Relógio', 'Outros',
+    'Pulseira', 'Pingente', 'Bracelete', 'Piercing', 'Outros',
 ]
 
 PRECOS_LIGA = {
@@ -57,11 +57,11 @@ USUARIOS = [
 ]
 
 CLIENTES = [
-    {'nome': 'Ana Paula Ferreira',   'cpf_cnpj': '123.456.789-09', 'telefone': '(11) 99123-4567', 'email': 'ana@email.com'},
-    {'nome': 'Carlos Eduardo Souza', 'cpf_cnpj': '234.567.890-01', 'telefone': '(21) 98765-4321', 'email': 'carlos@email.com'},
-    {'nome': 'Mariana Costa',        'cpf_cnpj': '345.678.901-23', 'telefone': '(31) 97654-3210'},
-    {'nome': 'Roberto Lima',         'cpf_cnpj': '456.789.012-34', 'telefone': '(41) 96543-2109'},
-    {'nome': 'Fernanda Oliveira',    'cpf_cnpj': '567.890.123-45', 'telefone': '(51) 95432-1098', 'email': 'fer@email.com'},
+    {'nome': 'Ana Paula Ferreira',   'telefone': '(11) 99123-4567'},
+    {'nome': 'Carlos Eduardo Souza', 'telefone': '(21) 98765-4321'},
+    {'nome': 'Mariana Costa',        'telefone': '(31) 97654-3210'},
+    {'nome': 'Roberto Lima',         'telefone': '(41) 96543-2109'},
+    {'nome': 'Fernanda Oliveira',    'telefone': '(51) 95432-1098'},
 ]
 
 FORNECEDORES = [
@@ -70,28 +70,25 @@ FORNECEDORES = [
     {'razao_social': 'Distribuidora Nacional de Joias', 'nome_fantasia': 'DNJ',          'cnpj': '34.567.890/0001-12', 'telefone': '(21) 3300-9900'},
 ]
 
-# (nome, tipo, liga_ou_None, peso_gramas_padrao, custo_mao_de_obra_padrao, preco_proprio_ou_None)
-# Os três últimos campos agora são defaults para as peças, não atributos do produto.
+# (nome, tipo, liga, peso_gramas_padrao, custo_mao_de_obra_padrao)
+# Os dois últimos campos são defaults para as peças, não atributos do produto.
 PRODUTOS = [
-    ('Anel Solitário',          'Anel',      'Ouro 18k',  Decimal('3.5'),  Decimal('180.00'), None),
-    ('Anel de Formatura',       'Anel',      'Ouro 18k',  Decimal('5.0'),  Decimal('250.00'), None),
-    ('Anel Aparador',           'Anel',      'Ouro 10k',  Decimal('2.8'),  Decimal('120.00'), None),
-    ('Aliança Tradicional',     'Aliança',   'Ouro 18k',  Decimal('4.2'),  Decimal('150.00'), None),
-    ('Aliança com Friso',       'Aliança',   'Ouro 18k',  Decimal('4.8'),  Decimal('170.00'), None),
-    ('Brinco Argola',           'Brinco',    'Prata 950', Decimal('2.1'),  Decimal('45.00'),  None),
-    ('Brinco Pérola',           'Brinco',    'Prata 950', Decimal('1.5'),  Decimal('55.00'),  None),
-    ('Brinco Gota',             'Brinco',    'Ouro 18k',  Decimal('1.9'),  Decimal('95.00'),  None),
-    ('Colar Veneziana',         'Colar',     'Ouro 10k',  Decimal('8.3'),  Decimal('220.00'), None),
-    ('Corrente Groumet',        'Corrente',  'Ouro 10k',  Decimal('12.0'), Decimal('300.00'), None),
-    ('Corrente Piastrine',      'Corrente',  'Ouro 18k',  Decimal('9.5'),  Decimal('280.00'), None),
-    ('Pingente Coração',        'Pingente',  'Prata 950', Decimal('1.8'),  Decimal('35.00'),  None),
-    ('Pingente Cruz',           'Pingente',  'Ouro 18k',  Decimal('2.2'),  Decimal('90.00'),  None),
-    ('Pingente Infinito',       'Pingente',  'Prata 950', Decimal('1.2'),  Decimal('30.00'),  None),
-    ('Pulseira Elo Português',  'Pulseira',  'Ouro 18k',  Decimal('6.5'),  Decimal('200.00'), None),
-    ('Pulseira Veneziana',      'Pulseira',  'Prata 950', Decimal('5.8'),  Decimal('80.00'),  None),
-    # Relógios — liga não se aplica, preco_proprio define o valor de venda
-    ('Relógio Clássico Dourado','Relógio',   None,        Decimal('48.0'), Decimal('0.00'),   Decimal('2800.00')),
-    ('Relógio Prata Slim',      'Relógio',   None,        Decimal('35.0'), Decimal('0.00'),   Decimal('1950.00')),
+    ('Anel Solitário',          'Anel',      'Ouro 18k',  Decimal('3.5'),  Decimal('180.00')),
+    ('Anel de Formatura',       'Anel',      'Ouro 18k',  Decimal('5.0'),  Decimal('250.00')),
+    ('Anel Aparador',           'Anel',      'Ouro 10k',  Decimal('2.8'),  Decimal('120.00')),
+    ('Aliança Tradicional',     'Aliança',   'Ouro 18k',  Decimal('4.2'),  Decimal('150.00')),
+    ('Aliança com Friso',       'Aliança',   'Ouro 18k',  Decimal('4.8'),  Decimal('170.00')),
+    ('Brinco Argola',           'Brinco',    'Prata 950', Decimal('2.1'),  Decimal('45.00')),
+    ('Brinco Pérola',           'Brinco',    'Prata 950', Decimal('1.5'),  Decimal('55.00')),
+    ('Brinco Gota',             'Brinco',    'Ouro 18k',  Decimal('1.9'),  Decimal('95.00')),
+    ('Colar Veneziana',         'Colar',     'Ouro 10k',  Decimal('8.3'),  Decimal('220.00')),
+    ('Corrente Groumet',        'Corrente',  'Ouro 10k',  Decimal('12.0'), Decimal('300.00')),
+    ('Corrente Piastrine',      'Corrente',  'Ouro 18k',  Decimal('9.5'),  Decimal('280.00')),
+    ('Pingente Coração',        'Pingente',  'Prata 950', Decimal('1.8'),  Decimal('35.00')),
+    ('Pingente Cruz',           'Pingente',  'Ouro 18k',  Decimal('2.2'),  Decimal('90.00')),
+    ('Pingente Infinito',       'Pingente',  'Prata 950', Decimal('1.2'),  Decimal('30.00')),
+    ('Pulseira Elo Português',  'Pulseira',  'Ouro 18k',  Decimal('6.5'),  Decimal('200.00')),
+    ('Pulseira Veneziana',      'Pulseira',  'Prata 950', Decimal('5.8'),  Decimal('80.00')),
 ]
 
 # Lotes de entrada: (fornecedor, obs, [(produto, qtd, peso_por_peca_ou_None), ...])
@@ -197,10 +194,10 @@ PECAS = [
     ('Brinco Argola',          'DIS'),
     ('Brinco Argola',          'DIS'),
     ('Brinco Pérola',          'DIS'),
-    ('Brinco Pérola',          'CON'),
+    ('Brinco Pérola',          'RES'),
     ('Brinco Gota',            'DIS'),
     ('Colar Veneziana',        'DIS'),
-    ('Colar Veneziana',        'CON'),
+    ('Colar Veneziana',        'RES'),
     ('Corrente Groumet',       'DIS'),
     ('Corrente Piastrine',     'DIS'),
     ('Corrente Piastrine',     'DIS'),
@@ -213,10 +210,6 @@ PECAS = [
     ('Pulseira Elo Português', 'DIS'),
     ('Pulseira Veneziana',     'DIS'),
     ('Pulseira Veneziana',     'DIS'),
-    ('Relógio Clássico Dourado', 'DIS'),
-    ('Relógio Clássico Dourado', 'RES'),
-    ('Relógio Prata Slim',       'DIS'),
-    ('Relógio Prata Slim',       'CON'),
 ]
 
 
@@ -334,20 +327,19 @@ class Command(BaseCommand):
 
     def _seed_pecas(self):
         """Cria o estoque atual de peças (DIS/RES/CON)."""
-        defaults_map = {nome: (peso, custo, preco) for nome, _, _, peso, custo, preco in PRODUTOS}
+        defaults_map = {nome: (peso, custo) for nome, _, _, peso, custo in PRODUTOS}
         criadas = 0
         for nome_produto, status in PECAS:
             produto = Produto.objects.filter(nome=nome_produto).first()
             if not produto:
                 self.stderr.write(f"Produto \"{nome_produto}\" não encontrado, pulando peça.")
                 continue
-            peso, custo, preco_proprio = defaults_map.get(nome_produto, (Decimal('1.0'), Decimal('0.00'), None))
+            peso, custo = defaults_map.get(nome_produto, (Decimal('1.0'), Decimal('0.00')))
             Peca.objects.create(
                 produto=produto,
                 status=status,
                 peso_gramas=peso,
                 custo_mao_de_obra=custo,
-                preco_proprio=preco_proprio,
             )
             criadas += 1
         self.stdout.write(f"Peças de estoque criadas: {criadas}")
@@ -358,7 +350,7 @@ class Command(BaseCommand):
             self.stdout.write('Movimentações: já existem, pulando.')
             return
 
-        defaults_map = {nome: (peso, custo, preco) for nome, _, _, peso, custo, preco in PRODUTOS}
+        defaults_map = {nome: (peso, custo) for nome, _, _, peso, custo in PRODUTOS}
 
         with transaction.atomic():
             for forn_nome, obs, itens in LOTES_ENT:
@@ -376,8 +368,8 @@ class Command(BaseCommand):
                     produto = Produto.objects.filter(nome=nome_produto).first()
                     if not produto:
                         continue
-                    _, custo, _ = defaults_map.get(nome_produto, (None, Decimal('0.00'), None))
-                    peso_def, *_ = defaults_map.get(nome_produto, (Decimal('1.0'),))
+                    _, custo = defaults_map.get(nome_produto, (None, Decimal('0.00')))
+                    peso_def, _ = defaults_map.get(nome_produto, (Decimal('1.0'), Decimal('0.00')))
                     peso = peso_por_peca or peso_def
                     ItemLote.objects.create(
                         lote=lote,
@@ -411,7 +403,7 @@ class Command(BaseCommand):
                 fornecedor = Fornecedor.objects.filter(nome_fantasia=forn_nome).first() if forn_nome else None
                 if not produto:
                     continue
-                peso, custo, _ = defaults_map.get(nome_produto, (Decimal('1.0'), Decimal('0.00'), None))
+                peso, custo = defaults_map.get(nome_produto, (Decimal('1.0'), Decimal('0.00')))
                 for _ in range(qtd):
                     peca = Peca.objects.create(
                         produto=produto,
@@ -436,7 +428,7 @@ class Command(BaseCommand):
             self.stdout.write('Vendas: já existem, pulando.')
             return
 
-        defaults_map = {nome: (peso, custo, preco) for nome, _, _, peso, custo, preco in PRODUTOS}
+        defaults_map = {nome: (peso, custo) for nome, _, _, peso, custo in PRODUTOS}
 
         with transaction.atomic():
             for cli_nome, vend_user, status, desconto, obs, data_str, itens in VENDAS:
@@ -468,14 +460,13 @@ class Command(BaseCommand):
                         else Peca.Status.VENDIDA
                     )
 
-                    peso, custo, preco_proprio = defaults_map.get(nome_produto, (Decimal('1.0'), Decimal('0.00'), None))
+                    peso, custo = defaults_map.get(nome_produto, (Decimal('1.0'), Decimal('0.00')))
                     for _ in range(qtd):
                         peca = Peca.objects.create(
                             produto=produto,
                             status=peca_status,
                             peso_gramas=peso,
                             custo_mao_de_obra=custo,
-                            preco_proprio=preco_proprio,
                         )
                         ItemVenda.objects.create(
                             venda=venda,

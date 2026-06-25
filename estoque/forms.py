@@ -2,25 +2,10 @@ from decimal import Decimal
 
 from django import forms
 
-from catalogo.models import Produto, TipoProduto
+from catalogo.models import Produto
 from vendas.models import Cliente, Fornecedor
 
 from .models import ItemLote, LoteMovimentacao, MovimentacaoEstoque
-
-
-class ProdutoSelectComTipo(forms.Select):
-    """Select de produto que inclui data-tipo em cada option para filtro via JS."""
-
-    def __init__(self, produtos=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._mapa_tipo = {str(p.pk): (p.tipo_id or '') for p in (produtos or [])}
-
-    def create_option(self, name, value, label, selected, index, subgroup=None, attrs=None, subindex=None):
-        option = super().create_option(name, value, label, selected, index, subgroup, attrs)
-        tipo_id = self._mapa_tipo.get(str(value.value if hasattr(value, 'value') else value), '')
-        if tipo_id:
-            option['attrs']['data-tipo'] = tipo_id
-        return option
 
 
 class MovimentacaoEntradaForm(forms.Form):
@@ -158,21 +143,21 @@ class LoteItemEntradaForm(forms.Form):
     def __init__(self, lote=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.lote = lote
-        produtos = Produto.objects.select_related('liga', 'tipo').order_by('nome')
-        self.fields['produto'].widget   = ProdutoSelectComTipo(
-            produtos=produtos,
-            attrs={'class': 'form-select'},
-        )
-        self.fields['produto'].queryset = produtos
+        self.fields['produto'].queryset = Produto.objects.select_related('liga', 'tipo').order_by('nome')
 
-    def clean(self):
-        cleaned  = super().clean()
-        produto  = cleaned.get('produto')
-        qtd      = cleaned.get('quantidade')
-        if produto and qtd and self.lote:
-            if ItemLote.objects.filter(lote=self.lote, produto=produto, peca__isnull=True).exists():
-                raise forms.ValidationError(f'"{produto}" já está neste lote.')
-        return cleaned
+
+class ItemLotePesoForm(forms.ModelForm):
+    class Meta:
+        model  = ItemLote
+        fields = ['peso_padrao', 'custo_mao_de_obra']
+        widgets = {
+            'peso_padrao':       forms.TextInput(attrs={'class': 'form-control form-control-sm', 'data-mask': 'decimal-3'}),
+            'custo_mao_de_obra': forms.TextInput(attrs={'class': 'form-control form-control-sm', 'data-mask': 'decimal-2'}),
+        }
+        labels = {
+            'peso_padrao':       'Peso (g)',
+            'custo_mao_de_obra': 'Mão de obra (R$)',
+        }
 
 
 class LoteItemSaidaForm(forms.Form):

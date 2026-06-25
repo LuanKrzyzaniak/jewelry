@@ -60,18 +60,6 @@ DATABASES = {
     }
 }
 
-# Para produção, substituir pelo bloco abaixo e instalar psycopg2-binary:
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'jewelry_db',
-#         'USER': 'postgres',
-#         'PASSWORD': '',
-#         'HOST': 'localhost',
-#         'PORT': '5432',
-#     }
-# }
-
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -97,5 +85,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 
-# Chave da GoldAPI (https://www.goldapi.io) — deixar vazio para usar mock em dev
+# Chave da GoldAPI (https://www.goldapi.io), se ficar vazio usa dados mockados
 GOLDAPI_KEY = ''

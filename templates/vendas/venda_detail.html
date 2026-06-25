@@ -26,7 +26,6 @@
 <form method="post" action="{% url 'vendas:item_adicionar' venda.pk %}" id="formAdicionarPeca">
   {% csrf_token %}
   <input type="hidden" name="peca_id" id="hiddenPecaId">
-  <input type="hidden" name="preco_unitario_pago" id="hiddenPreco">
 </form>
 {% endif %}
 
@@ -49,7 +48,7 @@
             <th>Código</th>
             <th>Produto</th>
             <th>Liga / Peso</th>
-            <th class="text-end">Preço pago</th>
+            <th class="text-end" style="width:160px">Preço pago</th>
             <th></th>
           </tr>
         </thead>
@@ -102,8 +101,20 @@
           <dt class="col-7 text-muted">Cliente</dt>
           <dd class="col-5">{{ venda.cliente }}</dd>
 
-          <dt class="col-7 text-muted">Desconto</dt>
-          <dd class="col-5">R$ {{ venda.desconto_total|floatformat:"2g" }}</dd>
+          <dt class="col-12 text-muted mb-1">Desconto</dt>
+          <dd class="col-12">
+            {% if venda.status != 'CAN' %}
+            <form method="post" action="{% url 'vendas:venda_desconto_atualizar' venda.pk %}" class="d-flex gap-1">
+              {% csrf_token %}
+              {{ desconto_form.tipo }}
+              {{ desconto_form.valor }}
+              <button type="submit" class="btn btn-sm btn-outline-secondary flex-shrink-0"><i class="bi bi-check"></i></button>
+            </form>
+            {% for error in desconto_form.valor.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            {% else %}
+            R$ {{ venda.desconto_total|floatformat:"2g" }}
+            {% endif %}
+          </dd>
 
           <dt class="col-7 fw-semibold">Total</dt>
           <dd class="col-5 fw-bold fs-5 text-success mb-0">R$ {{ venda.valor_total|floatformat:"2g" }}</dd>
@@ -140,8 +151,13 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div class="d-flex gap-2 mb-3">
-          <input type="search" id="searchPeca" class="form-control" placeholder="Buscar por código ou nome…">
+        <div class="d-flex gap-2 mb-2">
+          <div class="position-relative flex-grow-1">
+            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"></i>
+            <input type="search" id="searchPeca" class="form-control ps-4" style="padding-right:2rem"
+                   placeholder="Buscar por código, nome, tipo ou liga…" autocomplete="off">
+            <button type="button" id="btnLimparBusca" class="btn-close position-absolute top-50 end-0 translate-middle-y me-2 d-none" aria-label="Limpar"></button>
+          </div>
           <select id="filtroTipo" class="form-select" style="max-width:200px">
             <option value="">Todos os tipos</option>
             {% for tipo in tipos_produto %}
@@ -149,16 +165,13 @@
             {% endfor %}
           </select>
         </div>
+        <p id="contadorResultados" class="text-muted small mb-2"></p>
         <div id="pecaGrid" class="row g-2"></div>
-        <p id="semResultados" class="text-center text-muted py-4 d-none">Nenhuma peça disponível.</p>
+        <p id="semResultados" class="text-center text-muted py-4 d-none">Nenhuma peça encontrada.</p>
       </div>
       <div class="modal-footer justify-content-between">
         <div id="pickerSelecionada" class="text-muted small d-none flex-grow-1 me-3">
-          <div class="mb-1">Selecionada: <strong id="pickerPecaCodigo"></strong></div>
-          <div class="d-flex align-items-center gap-2">
-            <label class="small fw-semibold mb-0 text-nowrap">Preço pago (R$):</label>
-            <input type="number" id="pickerPreco" class="form-control form-control-sm" style="max-width:130px" step="0.01" min="0.01" placeholder="0,00">
-          </div>
+          Selecionada: <strong id="pickerPecaCodigo"></strong>
         </div>
         <div class="d-flex gap-2 flex-shrink-0">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -171,11 +184,27 @@
   </div>
 </div>
 
-<script id="pecas-data" type="application/json">{{ pecas_json }}</script>
+{{ pecas_json|json_script:"pecas-data" }}
 {% endif %}
 {% endblock %}
 
 {% block extra_js %}
+<script>
+const descTipo  = document.getElementById('id_tipo');
+const descValor = document.getElementById('id_valor');
+
+function clampPercentual() {
+  if (!descTipo || !descValor || descTipo.value !== 'percentual') return;
+  const num = parseFloat(descValor.value.replace(',', '.'));
+  if (!isNaN(num) && num > 100) descValor.value = '100,00';
+}
+
+if (descTipo && descValor) {
+  descTipo.addEventListener('change', clampPercentual);
+  descValor.addEventListener('keyup', clampPercentual);
+  descValor.closest('form').addEventListener('submit', clampPercentual);
+}
+</script>
 {% if venda.status != 'CAN' %}
 <script>
 const PECAS = JSON.parse(document.getElementById('pecas-data').textContent);
@@ -225,44 +254,71 @@ function selecionarPeca(p) {
   selecionada = p;
   document.getElementById('pickerSelecionada').classList.remove('d-none');
   document.getElementById('pickerPecaCodigo').textContent = `${p.codigo} — ${p.nome}`;
-  const precoInput = document.getElementById('pickerPreco');
-  precoInput.value = parseFloat(p.preco).toFixed(2);
   document.getElementById('btnConfirmarPeca').disabled = false;
 }
 
-function filtrar() {
-  const q = document.getElementById('searchPeca').value.toLowerCase();
+function filtrarLista() {
+  const q = document.getElementById('searchPeca').value.toLowerCase().trim();
   const tipoId = document.getElementById('filtroTipo').value;
-  renderCards(PECAS.filter(p => {
-    const matchQ = !q || p.codigo.toLowerCase().includes(q) || p.nome.toLowerCase().includes(q);
+  return PECAS.filter(p => {
+    const matchQ = !q
+      || p.codigo.toLowerCase().includes(q)
+      || p.nome.toLowerCase().includes(q)
+      || p.tipo.toLowerCase().includes(q)
+      || p.liga.toLowerCase().includes(q);
     const matchT = !tipoId || String(p.tipo_id) === tipoId;
     return matchQ && matchT;
-  }));
+  });
 }
 
-document.getElementById('searchPeca').addEventListener('input', filtrar);
+function filtrar() {
+  const filtradas = filtrarLista();
+  const contador  = document.getElementById('contadorResultados');
+  contador.textContent = filtradas.length === PECAS.length
+    ? `${PECAS.length} peça${PECAS.length === 1 ? '' : 's'} disponível${PECAS.length === 1 ? '' : 'eis'}`
+    : `${filtradas.length} de ${PECAS.length} peças`;
+  renderCards(filtradas);
+
+  const busca = document.getElementById('searchPeca').value;
+  document.getElementById('btnLimparBusca').classList.toggle('d-none', !busca);
+}
+
+const inputBusca = document.getElementById('searchPeca');
+inputBusca.addEventListener('input', filtrar);
 document.getElementById('filtroTipo').addEventListener('change', filtrar);
+
+document.getElementById('btnLimparBusca').addEventListener('click', () => {
+  inputBusca.value = '';
+  filtrar();
+  inputBusca.focus();
+});
+
+// Enter na busca: se sobrou só uma peça, seleciona e já confirma.
+inputBusca.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const filtradas = filtrarLista();
+  if (filtradas.length !== 1) return;
+  selecionarPeca(filtradas[0]);
+  document.getElementById('btnConfirmarPeca').click();
+});
+
 document.getElementById('modalPicker').addEventListener('show.bs.modal', () => {
   selecionada = null;
   document.getElementById('pickerSelecionada').classList.add('d-none');
   document.getElementById('btnConfirmarPeca').disabled = true;
-  document.getElementById('pickerPreco').value = '';
-  document.getElementById('searchPeca').value = '';
+  inputBusca.value = '';
   document.getElementById('filtroTipo').value = '';
-  renderCards(PECAS);
+  filtrar();
+});
+
+document.getElementById('modalPicker').addEventListener('shown.bs.modal', () => {
+  inputBusca.focus();
 });
 
 document.getElementById('btnConfirmarPeca').addEventListener('click', () => {
   if (!selecionada) return;
-  const preco = document.getElementById('pickerPreco').value;
-  if (!preco || parseFloat(preco) <= 0) {
-    document.getElementById('pickerPreco').classList.add('is-invalid');
-    document.getElementById('pickerPreco').focus();
-    return;
-  }
-  document.getElementById('pickerPreco').classList.remove('is-invalid');
   document.getElementById('hiddenPecaId').value = selecionada.id;
-  document.getElementById('hiddenPreco').value = preco;
   document.getElementById('formAdicionarPeca').submit();
 });
 </script>

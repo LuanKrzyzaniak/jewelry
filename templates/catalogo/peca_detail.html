@@ -76,7 +76,6 @@
             <span class="badge
               {% if peca.status == 'DIS' %}bg-success-subtle text-success border border-success-subtle
               {% elif peca.status == 'RES' %}bg-warning-subtle text-warning-emphasis border border-warning-subtle
-              {% elif peca.status == 'CON' %}bg-info-subtle text-info-emphasis border border-info-subtle
               {% else %}bg-secondary-subtle text-secondary border border-secondary-subtle{% endif %}">
               {{ peca.get_status_display }}
             </span>
@@ -85,16 +84,11 @@
           <dt class="col-5 text-muted">Peso</dt>
           <dd class="col-7">{{ peca.peso_gramas }} g</dd>
 
-          {% if peca.is_relogio %}
-          <dt class="col-5 text-muted">Valor</dt>
-          <dd class="col-7 fw-semibold text-success">R$ {{ peca.preco_proprio|floatformat:"2g" }}</dd>
-          {% else %}
           <dt class="col-5 text-muted">Mão de obra</dt>
           <dd class="col-7">R$ {{ peca.custo_mao_de_obra|floatformat:"2g" }}</dd>
 
           <dt class="col-5 fw-semibold">Preço sugerido</dt>
           <dd class="col-7 fw-bold text-success">R$ {{ peca.preco_sugerido|floatformat:"2g" }}</dd>
-          {% endif %}
 
           <dt class="col-5 text-muted">Cadastrada</dt>
           <dd class="col-7">{{ peca.criado_em|date:"d/m/Y" }}</dd>

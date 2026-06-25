@@ -17,7 +17,6 @@ def index(request):
     inicio_mes  = hoje.replace(day=1)
     inicio_30d  = hoje - timedelta(days=29)
 
-    # Estoque por produto
     produtos_qs = Produto.objects.annotate(
         estoque_calc=Sum(
             'movimentacoes__quantidade',
@@ -32,27 +31,23 @@ def index(request):
     total_em_estoque = produtos_qs.filter(estoque_calc__gt=0).count()
     sem_estoque      = list(produtos_qs.filter(estoque_calc=0).select_related('liga', 'tipo').order_by('nome'))
 
-    # Vendas hoje
     qs_hoje          = Venda.objects.filter(status=Venda.Status.CONFIRMADA, data_venda__date=hoje)
     vendas_hoje_agg  = qs_hoje.aggregate(total=Sum('valor_total'), count=Count('id'))
     vendas_hoje      = vendas_hoje_agg['total'] or 0
     num_vendas_hoje  = vendas_hoje_agg['count'] or 0
 
-    # Vendas do mês
     qs_mes          = Venda.objects.filter(status=Venda.Status.CONFIRMADA, data_venda__date__gte=inicio_mes)
     vendas_mes_agg  = qs_mes.aggregate(total=Sum('valor_total'), count=Count('id'))
     vendas_mes      = vendas_mes_agg['total'] or 0
     num_vendas_mes  = vendas_mes_agg['count'] or 0
     ticket_medio    = round(vendas_mes / num_vendas_mes, 2) if num_vendas_mes else 0
 
-    # Cotações mais recentes por metal
     cotacoes = {}
     for metal in Metal.objects.order_by('nome'):
         cot = CotacaoMetal.objects.filter(metal=metal).order_by('-data').first()
         if cot:
             cotacoes[metal.nome] = cot
 
-    # Gráfico: vendas por dia nos últimos 30 dias
     vendas_por_dia = (
         Venda.objects.filter(
             status=Venda.Status.CONFIRMADA,
@@ -70,7 +65,6 @@ def index(request):
         labels_30d.append(d.strftime('%d/%m'))
         data_30d.append(mapa_dia.get(str(d), 0))
 
-    # Top 5 produtos mais vendidos no mês
     top_produtos = (
         ItemVenda.objects
         .filter(venda__status=Venda.Status.CONFIRMADA, venda__data_venda__date__gte=inicio_mes)
@@ -79,14 +73,12 @@ def index(request):
         .order_by('-qtd')[:5]
     )
 
-    # Últimas 5 vendas confirmadas
     ultimas_vendas = (
         Venda.objects.filter(status=Venda.Status.CONFIRMADA)
         .select_related('cliente', 'vendedor')
         .order_by('-data_venda')[:5]
     )
 
-    # Lotes em aberto
     lotes_abertos = (
         LoteMovimentacao.objects.filter(finalizado=False)
         .select_related('responsavel', 'fornecedor', 'cliente')

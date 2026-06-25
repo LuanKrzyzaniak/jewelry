@@ -36,20 +36,10 @@
             {% for error in form.peso_gramas.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
           </div>
 
-          <!-- Campos de produto comum (não relógio) -->
-          <div id="campos-material">
-            <div class="mb-3">
-              <label class="form-label small fw-semibold">{{ form.custo_mao_de_obra.label }}</label>
-              {{ form.custo_mao_de_obra }}
-              {% for error in form.custo_mao_de_obra.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-            </div>
-          </div>
-
-          <!-- Campo de relógio -->
-          <div id="campo-preco-proprio" class="mb-3" style="display:none">
-            <label class="form-label small fw-semibold">{{ form.preco_proprio.label }} <span class="text-danger">*</span></label>
-            {{ form.preco_proprio }}
-            {% for error in form.preco_proprio.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">{{ form.custo_mao_de_obra.label }}</label>
+            {{ form.custo_mao_de_obra }}
+            {% for error in form.custo_mao_de_obra.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
           </div>
 
           <div class="mb-3">
@@ -68,22 +58,4 @@
     </div>
   </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-const selProduto     = document.getElementById('id_produto');
-const camposMaterial = document.getElementById('campos-material');
-const campoPrecoProp = document.getElementById('campo-preco-proprio');
-
-function aplicarEstadoProduto() {
-    const opt      = selProduto.options[selProduto.selectedIndex];
-    const isRelogi = opt && opt.dataset.relogio === '1';
-    camposMaterial.style.display = isRelogi ? 'none' : '';
-    campoPrecoProp.style.display = isRelogi ? '' : 'none';
-}
-
-selProduto.addEventListener('change', aplicarEstadoProduto);
-aplicarEstadoProduto();
-</script>
 {% endblock %}
