@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Novo Lote — Joalheria{% endblock %}
-{% block breadcrumb %}Estoque / <a href="{% url 'estoque:lote_list' %}">Lotes</a> / Novo{% endblock %}
+{% block breadcrumb %}<a href="{% url 'estoque:movimentacao_list' %}">Estoque</a> / <a href="{% url 'estoque:lote_list' %}">Lotes</a> / Novo{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">

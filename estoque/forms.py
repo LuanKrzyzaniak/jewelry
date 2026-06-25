@@ -63,7 +63,7 @@ class MovimentacaoSaidaForm(forms.Form):
         label='Tipo',
     )
     cliente     = forms.ModelChoiceField(
-        queryset=Cliente.objects.order_by('nome'),
+        queryset=Cliente.objects.filter(ativo=True).order_by('nome'),
         required=False,
         empty_label='Selecione o cliente',
         widget=forms.Select(attrs={'class': 'form-select'}),
@@ -100,7 +100,7 @@ class LoteForm(forms.ModelForm):
         self.fields['fornecedor'].queryset    = Fornecedor.objects.filter(ativo=True).order_by('razao_social')
         self.fields['fornecedor'].empty_label = 'Selecione o fornecedor'
         self.fields['fornecedor'].required    = False
-        self.fields['cliente'].queryset       = Cliente.objects.order_by('nome')
+        self.fields['cliente'].queryset       = Cliente.objects.filter(ativo=True).order_by('nome')
         self.fields['cliente'].empty_label    = 'Selecione o cliente'
         self.fields['cliente'].required       = False
 

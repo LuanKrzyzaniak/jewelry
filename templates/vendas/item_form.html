@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Adicionar Item — Venda #{{ venda.pk }}{% endblock %}
-{% block breadcrumb %}Vendas / <a href="{% url 'vendas:venda_detail' venda.pk %}">Venda #{{ venda.pk }}</a> / Adicionar item{% endblock %}
+{% block breadcrumb %}<a href="{% url 'vendas:venda_list' %}">Vendas</a> / <a href="{% url 'vendas:venda_detail' venda.pk %}">Venda #{{ venda.pk }}</a> / Adicionar item{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">

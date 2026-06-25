@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}{{ produto.nome }} — Joalheria{% endblock %}
-{% block breadcrumb %}Catálogo / <a href="{% url 'catalogo:produto_list' %}">Produtos</a> / {{ produto.nome }}{% endblock %}
+{% block breadcrumb %}<a href="{% url 'catalogo:peca_list' %}">Catálogo</a> / <a href="{% url 'catalogo:produto_list' %}">Produtos</a> / {{ produto.nome }}{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-start justify-content-between mb-4">

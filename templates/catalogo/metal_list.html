@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Metais — Joalheria{% endblock %}
-{% block breadcrumb %}Gerência / Metais{% endblock %}
+{% block breadcrumb %}Gerência / <a href="{% url 'catalogo:metal_list' %}">Metais</a>{% endblock %}
 
 {% block content %}
 <h4 class="fw-semibold mb-4">Metais</h4>

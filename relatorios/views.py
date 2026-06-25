@@ -1,13 +1,12 @@
 from datetime import date, timedelta
 
-from django.contrib.auth.decorators import login_required
 from django.db.models import Count, DecimalField, Q, Sum
 from django.db.models.functions import TruncDate
 from django.shortcuts import redirect, render
 
-from catalogo.models import Produto
+from catalogo.models import Peca, Produto
 from estoque.models import MovimentacaoEstoque as ME
-from usuarios.mixins import GerenteRequiredMixin
+from usuarios.decorators import gerente_required
 from vendas.models import ItemVenda, Venda
 
 
@@ -24,7 +23,7 @@ def _parse_periodo(request):
     return inicio, fim
 
 
-@login_required
+@gerente_required
 def vendas(request):
     inicio, fim = _parse_periodo(request)
 
@@ -60,7 +59,7 @@ def vendas(request):
     return render(request, 'relatorios/vendas.html', ctx)
 
 
-@login_required
+@gerente_required
 def giro(request):
     inicio, fim = _parse_periodo(request)
 
@@ -76,15 +75,13 @@ def giro(request):
     )
     saidas_map = {s['produto_id']: s['total_saida'] for s in saidas}
 
+    # Estoque atual = nº de peças disponíveis (mesma definição de Produto.estoque_atual),
+    # nunca negativo — diferente de somar movimentações, que pode ficar negativo quando
+    # há peças vendidas/ajustadas sem uma ENTRADA correspondente.
     produtos = Produto.objects.select_related('liga', 'tipo').annotate(
-        estoque_calc=Sum(
-            'movimentacoes__quantidade',
-            filter=Q(movimentacoes__tipo__in=[ME.Tipo.ENTRADA, ME.Tipo.AJUSTE_POS, ME.Tipo.DEVOLUCAO]),
-            default=0,
-        ) - Sum(
-            'movimentacoes__quantidade',
-            filter=Q(movimentacoes__tipo__in=[ME.Tipo.SAIDA, ME.Tipo.AJUSTE_NEG]),
-            default=0,
+        estoque_calc=Count(
+            'pecas',
+            filter=Q(pecas__status=Peca.Status.DISPONIVEL),
         )
     ).order_by('tipo__nome', 'nome')
 

@@ -2,7 +2,7 @@
 {% load vendas_filters %}
 
 {% block title %}Fornecedores — Joalheria{% endblock %}
-{% block breadcrumb %}Gerência / Fornecedores{% endblock %}
+{% block breadcrumb %}Gerência / <a href="{% url 'vendas:fornecedor_list' %}">Fornecedores</a>{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4">
@@ -15,7 +15,7 @@
 <div class="card border-0 shadow-sm">
   <table class="table table-hover align-middle mb-0">
     <thead class="table-light">
-      <tr><th>Nome</th><th>CNPJ</th><th>Telefone</th><th>Status</th><th></th></tr>
+      <tr><th>Nome</th><th>CNPJ</th><th>Telefone</th><th>Observação</th><th>Status</th><th></th></tr>
     </thead>
     <tbody>
       {% for f in fornecedores %}
@@ -23,6 +23,7 @@
         <td class="fw-medium">{{ f }}</td>
         <td class="small text-muted">{{ f.cnpj|default:"—" }}</td>
         <td class="small">{{ f.telefone|formato_tel|default:"—" }}</td>
+        <td class="small text-muted">{{ f.observacao|default:"—"|truncatechars:60 }}</td>
         <td>
           {% if f.ativo %}<span class="badge bg-success-subtle text-success">Ativo</span>
           {% else %}<span class="badge bg-secondary-subtle text-secondary">Inativo</span>{% endif %}
@@ -34,7 +35,7 @@
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="5" class="text-center text-muted py-4">Nenhum fornecedor cadastrado.</td></tr>
+      <tr><td colspan="6" class="text-center text-muted py-4">Nenhum fornecedor cadastrado.</td></tr>
       {% endfor %}
     </tbody>
   </table>

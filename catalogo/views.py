@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, Sum
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -79,17 +79,13 @@ def preco_liga_definir(request, liga_pk):
 
 
 def _anotar_estoque(qs):
-    from estoque.models import MovimentacaoEstoque as ME
-
+    # Estoque = nº de peças disponíveis (mesma definição de Produto.estoque_atual),
+    # nunca negativo — somar movimentações fica negativo quando há peças
+    # vendidas/ajustadas sem uma ENTRADA correspondente.
     return qs.annotate(
-        estoque_calc=Sum(
-            'movimentacoes__quantidade',
-            filter=Q(movimentacoes__tipo__in=[ME.Tipo.ENTRADA, ME.Tipo.AJUSTE_POS, ME.Tipo.DEVOLUCAO]),
-            default=0,
-        ) - Sum(
-            'movimentacoes__quantidade',
-            filter=Q(movimentacoes__tipo__in=[ME.Tipo.SAIDA, ME.Tipo.AJUSTE_NEG]),
-            default=0,
+        estoque_calc=Count(
+            'pecas',
+            filter=Q(pecas__status=Peca.Status.DISPONIVEL),
         )
     )
 
@@ -98,13 +94,14 @@ class ProdutoListView(LoginRequiredMixin, ListView):
     model               = Produto
     template_name       = 'catalogo/produto_list.html'
     context_object_name = 'produtos'
+    paginate_by         = 24
 
     def get_queryset(self):
         qs = Produto.objects.select_related('liga__metal', 'tipo')
         qs = _anotar_estoque(qs)
 
         if busca := self.request.GET.get('q'):
-            qs = qs.filter(Q(nome__icontains=busca) | Q(liga__nome__icontains=busca))
+            qs = qs.filter(nome__icontains=busca)
 
         if tipo_id := self.request.GET.get('tipo'):
             qs = qs.filter(tipo_id=tipo_id)
@@ -115,7 +112,7 @@ class ProdutoListView(LoginRequiredMixin, ListView):
         if self.request.GET.get('sem_estoque'):
             qs = qs.filter(estoque_calc=0)
 
-        return qs
+        return qs.order_by('nome')
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -210,6 +207,7 @@ class PecaListView(LoginRequiredMixin, ListView):
     model               = Peca
     template_name       = 'catalogo/peca_list.html'
     context_object_name = 'pecas'
+    paginate_by         = 24
 
     def get_queryset(self):
         qs = Peca.objects.select_related('produto__tipo', 'produto__liga__metal').prefetch_related('fotos')

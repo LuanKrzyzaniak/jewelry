@@ -23,7 +23,7 @@
 <div class="row g-3 mb-4">
 
   <div class="col-sm-6 col-xl-3">
-    <div class="card border-0 shadow-sm kpi-card h-100" style="border-color:#ffc107!important">
+    <div class="card border-0 shadow-sm kpi-card h-100" style="border-color:var(--gold)!important">
       <div class="card-body d-flex align-items-center gap-3">
         <div class="kpi-icon bg-warning bg-opacity-15 text-warning">
           <i class="bi bi-cart-check-fill"></i>
@@ -256,11 +256,11 @@ new Chart(ctx, {
         datasets: [{
             label: 'Vendas (R$)',
             data: {{ data_30d|safe }},
-            borderColor: '#ffc107',
-            backgroundColor: 'rgba(255,193,7,.1)',
+            borderColor: '#c9a227',
+            backgroundColor: 'rgba(201,162,39,.12)',
             borderWidth: 2,
             pointRadius: 3,
-            pointBackgroundColor: '#ffc107',
+            pointBackgroundColor: '#c9a227',
             fill: true,
             tension: 0.3,
         }]

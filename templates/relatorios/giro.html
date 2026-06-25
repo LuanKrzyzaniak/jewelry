@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Giro de Estoque — Joalheria{% endblock %}
-{% block breadcrumb %}Gerência / Relatórios / Giro de Estoque{% endblock %}
+{% block breadcrumb %}Gerência / Relatórios / <a href="{% url 'relatorios:giro' %}">Giro de Estoque</a>{% endblock %}
 
 {% block content %}
 <h4 class="fw-semibold mb-4">Giro de Estoque</h4>
@@ -79,7 +79,7 @@
 
 <!-- Giro por produto -->
 <div class="card border-0 shadow-sm">
-  <div class="card-header bg-transparent fw-semibold small">Giro por produto (ordenado por saída)</div>
+  <div class="card-header bg-transparent fw-semibold small">Saídas por produto</div>
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
@@ -87,8 +87,8 @@
           <th>Produto</th>
           <th>Liga</th>
           <th>Tipo</th>
-          <th class="text-center">Saídas no período</th>
-          <th class="text-center">Estoque atual</th>
+          <th class="text-center">Saídas</th>
+          <th class="text-center">Estoque</th>
         </tr>
       </thead>
       <tbody>

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Produtos — Joalheria{% endblock %}
-{% block breadcrumb %}Catálogo / Produtos{% endblock %}
+{% block breadcrumb %}<a href="{% url 'catalogo:peca_list' %}">Catálogo</a> / <a href="{% url 'catalogo:produto_list' %}">Produtos</a>{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -31,7 +31,7 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
     <h4 class="fw-semibold mb-0">Catálogo de Produtos</h4>
-    <span class="text-muted small">{{ produtos|length }} produto{{ produtos|length|pluralize }}</span>
+    <span class="text-muted small">{{ page_obj.paginator.count }} produto{{ page_obj.paginator.count|pluralize }}</span>
   </div>
   {% if user.is_gerente %}
   <a href="{% url 'catalogo:produto_create' %}" class="btn btn-warning">
@@ -52,7 +52,7 @@
             <i class="bi bi-search text-muted"></i>
           </span>
           <input type="text" name="q" value="{{ busca }}" class="form-control border-start-0 ps-0"
-                 placeholder="Buscar por nome ou liga...">
+                 placeholder="Buscar por nome...">
         </div>
         <div class="form-check mb-0">
           <input type="checkbox" name="sem_estoque" id="sem_estoque" value="1"
@@ -111,13 +111,16 @@
 
 <!-- Grade -->
 {% if produtos %}
+<div class="mb-3">
+  <span class="text-muted small">{{ page_obj.paginator.count }} produto{{ page_obj.paginator.count|pluralize }} encontrado{{ page_obj.paginator.count|pluralize }}</span>
+</div>
 <div class="row g-3">
   {% for produto in produtos %}
 
   {% with metal=produto.liga.metal.simbolo|default:"" %}
   <div class="col-sm-6 col-lg-4 col-xl-3">
     <div class="card border-0 shadow-sm h-100 produto-card"
-         style="border-top: 3px solid {% if metal == 'XAU' %}#ffc107{% elif metal == 'XAG' %}#adb5bd{% elif produto.liga %}#6ea8fe{% else %}#dee2e6{% endif %} !important">
+         style="border-top: 3px solid {% if metal == 'XAU' %}#c9a227{% elif metal == 'XAG' %}#9ea3ab{% elif produto.liga %}#6ea8fe{% else %}#dee2e6{% endif %} !important">
 
       <div class="card-body d-flex flex-column gap-2 p-3">
 
@@ -192,6 +195,8 @@
 
   {% endfor %}
 </div>
+
+{% include 'partials/pagination.html' %}
 
 {% else %}
 <div class="text-center py-5">

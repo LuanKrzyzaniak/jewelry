@@ -5,7 +5,8 @@ from .models import Cliente, Fornecedor, ItemVenda, Venda
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'telefone', 'criado_em')
+    list_display = ('nome', 'telefone', 'ativo', 'criado_em')
+    list_filter = ('ativo',)
     search_fields = ('nome', 'telefone')
 
 

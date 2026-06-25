@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Relatório de Vendas — Joalheria{% endblock %}
-{% block breadcrumb %}Gerência / Relatórios / Vendas{% endblock %}
+{% block breadcrumb %}Gerência / Relatórios / <a href="{% url 'relatorios:vendas' %}">Vendas</a>{% endblock %}
 
 {% block content %}
 <h4 class="fw-semibold mb-4">Relatório de Vendas</h4>

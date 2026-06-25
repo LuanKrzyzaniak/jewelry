@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Lote #{{ lote.pk }} — Joalheria{% endblock %}
-{% block breadcrumb %}Estoque / <a href="{% url 'estoque:lote_list' %}">Lotes</a> / #{{ lote.pk }}{% endblock %}
+{% block breadcrumb %}<a href="{% url 'estoque:movimentacao_list' %}">Estoque</a> / <a href="{% url 'estoque:lote_list' %}">Lotes</a> / #{{ lote.pk }}{% endblock %}
 
 {% block content %}
 <div class="mb-4">

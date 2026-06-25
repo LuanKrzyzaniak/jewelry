@@ -57,21 +57,20 @@ USUARIOS = [
 ]
 
 CLIENTES = [
-    {'nome': 'Ana Paula Ferreira',   'telefone': '(11) 99123-4567'},
+    {'nome': 'Ana Paula Ferreira',   'telefone': '(11) 99123-4567', 'observacao': 'Cliente VIP — prefere ouro 18k.'},
     {'nome': 'Carlos Eduardo Souza', 'telefone': '(21) 98765-4321'},
-    {'nome': 'Mariana Costa',        'telefone': '(31) 97654-3210'},
+    {'nome': 'Mariana Costa',        'telefone': '(31) 97654-3210', 'observacao': 'Compra alianças para revenda.'},
     {'nome': 'Roberto Lima',         'telefone': '(41) 96543-2109'},
     {'nome': 'Fernanda Oliveira',    'telefone': '(51) 95432-1098'},
+    {'nome': 'José Almeida',         'telefone': '(61) 90000-0000', 'ativo': False, 'observacao': 'Cadastro antigo, sem compras recentes.'},
 ]
 
 FORNECEDORES = [
-    {'razao_social': 'Ouro Brasil Joias Ltda',          'nome_fantasia': 'OBJ Joias',   'cnpj': '12.345.678/0001-90', 'telefone': '(11) 3344-5566'},
-    {'razao_social': 'Prata & Cia Comércio de Metais',  'nome_fantasia': 'Prata & Cia', 'cnpj': '23.456.789/0001-01', 'telefone': '(11) 3322-1100'},
-    {'razao_social': 'Distribuidora Nacional de Joias', 'nome_fantasia': 'DNJ',          'cnpj': '34.567.890/0001-12', 'telefone': '(21) 3300-9900'},
+    {'razao_social': 'Ouro Brasil Joias Ltda',          'nome_fantasia': 'OBJ Joias',   'cnpj': '12.345.678/0001-90', 'telefone': '(11) 3344-5566', 'observacao': 'Fornecedor principal de ouro 18k.'},
+    {'razao_social': 'Prata & Cia Comércio de Metais',  'nome_fantasia': 'Prata & Cia', 'cnpj': '23.456.789/0001-01', 'telefone': '(11) 3322-1100', 'observacao': 'Entrega quinzenal.'},
+    {'razao_social': 'Distribuidora Nacional de Joias', 'nome_fantasia': 'DNJ',          'cnpj': '34.567.890/0001-12', 'telefone': '(21) 3300-9900', 'ativo': False, 'observacao': 'Contrato encerrado em 2025 — mantido para histórico.'},
 ]
 
-# (nome, tipo, liga, peso_gramas_padrao, custo_mao_de_obra_padrao)
-# Os dois últimos campos são defaults para as peças, não atributos do produto.
 PRODUTOS = [
     ('Anel Solitário',          'Anel',      'Ouro 18k',  Decimal('3.5'),  Decimal('180.00')),
     ('Anel de Formatura',       'Anel',      'Ouro 18k',  Decimal('5.0'),  Decimal('250.00')),
@@ -91,7 +90,6 @@ PRODUTOS = [
     ('Pulseira Veneziana',      'Pulseira',  'Prata 950', Decimal('5.8'),  Decimal('80.00')),
 ]
 
-# Lotes de entrada: (fornecedor, obs, [(produto, qtd, peso_por_peca_ou_None), ...])
 LOTES_ENT = [
     (
         'OBJ Joias',
@@ -120,58 +118,45 @@ LOTES_ENT = [
     ),
 ]
 
-# Avulsas de entrada: (produto, qtd, fornecedor, obs)
 AVULSAS_ENT = [
     ('Anel Aparador',    4, 'DNJ',       'Entrada avulsa'),
     ('Corrente Groumet', 3, 'OBJ Joias', 'Entrada avulsa'),
     ('Colar Veneziana',  3, 'DNJ',       'Entrada avulsa'),
 ]
 
-# Vendas: (cliente, vendedor, status, desconto, obs, 'AAAA-MM-DD', [(produto, qtd), ...])
 VENDAS = [
-    # Agosto 2025
     ('Ana Paula Ferreira',   'admin', 'CON', Decimal('0.00'),   '',                             '2025-08-05', [('Brinco Argola', 2), ('Pingente Coração', 1)]),
     ('Carlos Eduardo Souza', 'user',  'CON', Decimal('0.00'),   '',                             '2025-08-18', [('Aliança Tradicional', 2)]),
-    # Setembro 2025
     ('Mariana Costa',        'user',  'CON', Decimal('0.00'),   '',                             '2025-09-03', [('Corrente Groumet', 1)]),
     ('Roberto Lima',         'admin', 'CON', Decimal('50.00'),  'Desconto fidelidade',          '2025-09-14', [('Anel Solitário', 1), ('Brinco Gota', 1)]),
     ('Fernanda Oliveira',    'user',  'CON', Decimal('0.00'),   '',                             '2025-09-27', [('Pingente Infinito', 2), ('Brinco Pérola', 1)]),
-    # Outubro 2025
     ('Ana Paula Ferreira',   'admin', 'CON', Decimal('0.00'),   '',                             '2025-10-02', [('Pulseira Veneziana', 1)]),
     ('Carlos Eduardo Souza', 'user',  'CON', Decimal('0.00'),   '',                             '2025-10-10', [('Pingente Cruz', 2), ('Brinco Argola', 1)]),
     ('Mariana Costa',        'admin', 'CON', Decimal('100.00'), 'Desconto especial',            '2025-10-21', [('Colar Veneziana', 1), ('Pingente Coração', 2)]),
     ('Roberto Lima',         'user',  'CAN', Decimal('0.00'),   'Cliente desistiu',             '2025-10-29', [('Anel de Formatura', 1)]),
-    # Novembro 2025
     ('Fernanda Oliveira',    'admin', 'CON', Decimal('0.00'),   '',                             '2025-11-08', [('Aliança com Friso', 2)]),
     ('Ana Paula Ferreira',   'user',  'CON', Decimal('0.00'),   '',                             '2025-11-15', [('Corrente Piastrine', 1), ('Brinco Pérola', 2)]),
     ('Carlos Eduardo Souza', 'admin', 'CON', Decimal('80.00'),  'Desconto fidelidade',          '2025-11-28', [('Anel Aparador', 1), ('Pingente Infinito', 1)]),
-    # Dezembro 2025 — pico de fim de ano
     ('Mariana Costa',        'user',  'CON', Decimal('0.00'),   '',                             '2025-12-02', [('Brinco Gota', 2), ('Pingente Coração', 1)]),
     ('Roberto Lima',         'admin', 'CON', Decimal('0.00'),   '',                             '2025-12-05', [('Pulseira Elo Português', 1)]),
     ('Fernanda Oliveira',    'user',  'CON', Decimal('150.00'), 'Desconto natal',               '2025-12-10', [('Aliança Tradicional', 2), ('Brinco Argola', 2)]),
     ('Ana Paula Ferreira',   'admin', 'CON', Decimal('0.00'),   '',                             '2025-12-15', [('Colar Veneziana', 1), ('Pingente Cruz', 1)]),
     ('Carlos Eduardo Souza', 'user',  'CON', Decimal('200.00'), 'Presente de natal',            '2025-12-20', [('Anel de Formatura', 1), ('Aliança com Friso', 1)]),
-    # Janeiro 2026
     ('Mariana Costa',        'admin', 'CON', Decimal('0.00'),   '',                             '2026-01-09', [('Brinco Pérola', 2)]),
     ('Roberto Lima',         'user',  'CON', Decimal('0.00'),   '',                             '2026-01-23', [('Corrente Groumet', 1), ('Pingente Infinito', 1)]),
-    # Fevereiro 2026
     ('Fernanda Oliveira',    'admin', 'CON', Decimal('0.00'),   '',                             '2026-02-06', [('Anel Solitário', 1)]),
     ('Ana Paula Ferreira',   'user',  'CON', Decimal('50.00'),  'Desconto dia dos namorados',   '2026-02-13', [('Aliança Tradicional', 1), ('Brinco Argola', 1)]),
     ('Carlos Eduardo Souza', 'admin', 'CON', Decimal('0.00'),   '',                             '2026-02-24', [('Pingente Coração', 3)]),
-    # Março 2026
     ('Mariana Costa',        'user',  'CON', Decimal('0.00'),   '',                             '2026-03-07', [('Pulseira Veneziana', 1), ('Brinco Pérola', 1)]),
     ('Roberto Lima',         'admin', 'CON', Decimal('0.00'),   '',                             '2026-03-18', [('Corrente Piastrine', 1)]),
     ('Fernanda Oliveira',    'user',  'CON', Decimal('0.00'),   '',                             '2026-03-25', [('Anel Aparador', 2), ('Pingente Cruz', 1)]),
-    # Abril 2026
     ('Ana Paula Ferreira',   'admin', 'CON', Decimal('0.00'),   '',                             '2026-04-04', [('Brinco Gota', 1), ('Pingente Infinito', 1)]),
     ('Carlos Eduardo Souza', 'user',  'RES', Decimal('0.00'),   'Aguardando confirmação',       '2026-04-11', [('Aliança com Friso', 2)]),
     ('Mariana Costa',        'admin', 'CON', Decimal('100.00'), 'Desconto cliente recorrente',  '2026-04-22', [('Colar Veneziana', 1), ('Brinco Argola', 2)]),
-    # Maio 2026
     ('Roberto Lima',         'user',  'CON', Decimal('0.00'),   '',                             '2026-05-03', [('Pulseira Elo Português', 1)]),
     ('Fernanda Oliveira',    'admin', 'CON', Decimal('0.00'),   '',                             '2026-05-12', [('Anel Solitário', 1), ('Pingente Coração', 1)]),
     ('Ana Paula Ferreira',   'user',  'CON', Decimal('0.00'),   '',                             '2026-05-19', [('Corrente Groumet', 1)]),
     ('Carlos Eduardo Souza', 'admin', 'CON', Decimal('50.00'),  'Desconto fidelidade',          '2026-05-28', [('Aliança Tradicional', 1), ('Brinco Pérola', 1)]),
-    # Junho 2026
     ('Mariana Costa',        'user',  'CON', Decimal('0.00'),   '',                             '2026-06-02', [('Pingente Cruz', 2), ('Brinco Gota', 1)]),
     ('Roberto Lima',         'admin', 'ORC', Decimal('0.00'),   'Orçamento enviado por e-mail', '2026-06-05', [('Anel de Formatura', 1)]),
     ('Fernanda Oliveira',    'user',  'CON', Decimal('0.00'),   '',                             '2026-06-08', [('Pulseira Veneziana', 1), ('Pingente Infinito', 1)]),
@@ -225,9 +210,9 @@ class Command(BaseCommand):
         self._seed_clientes()
         self._seed_fornecedores()
         self._seed_produtos()
-        self._seed_pecas()           # peças de estoque (DIS/RES/CON) — primeiro
-        self._seed_movimentacoes(gerente)  # lotes + avulsas de entrada
-        self._seed_vendas(gerente)   # vendas históricas com peças próprias
+        self._seed_pecas(gerente)
+        self._seed_movimentacoes(gerente)
+        self._seed_vendas(gerente)
         self.stdout.write(self.style.SUCCESS('\nSeed de desenvolvimento concluído.'))
 
     # ── helpers ──────────────────────────────────────────────────────────────
@@ -325,8 +310,7 @@ class Command(BaseCommand):
             )
             self.stdout.write(f"Produto {nome}: {'criado' if criado else 'já existe'}")
 
-    def _seed_pecas(self):
-        """Cria o estoque atual de peças (DIS/RES/CON)."""
+    def _seed_pecas(self, gerente):
         defaults_map = {nome: (peso, custo) for nome, _, _, peso, custo in PRODUTOS}
         criadas = 0
         for nome_produto, status in PECAS:
@@ -335,17 +319,33 @@ class Command(BaseCommand):
                 self.stderr.write(f"Produto \"{nome_produto}\" não encontrado, pulando peça.")
                 continue
             peso, custo = defaults_map.get(nome_produto, (Decimal('1.0'), Decimal('0.00')))
-            Peca.objects.create(
+            peca = Peca.objects.create(
                 produto=produto,
                 status=status,
                 peso_gramas=peso,
                 custo_mao_de_obra=custo,
             )
+            MovimentacaoEstoque.objects.create(
+                produto=produto,
+                peca=peca,
+                tipo=MovimentacaoEstoque.Tipo.ENTRADA,
+                quantidade=1,
+                responsavel=gerente,
+                observacoes='Estoque inicial',
+            )
+            if status == Peca.Status.VENDIDA:
+                MovimentacaoEstoque.objects.create(
+                    produto=produto,
+                    peca=peca,
+                    tipo=MovimentacaoEstoque.Tipo.SAIDA,
+                    quantidade=1,
+                    responsavel=gerente,
+                    observacoes='Saída histórica',
+                )
             criadas += 1
         self.stdout.write(f"Peças de estoque criadas: {criadas}")
 
     def _seed_movimentacoes(self, gerente):
-        """Cria lotes de entrada e avulsas de entrada (registros históricos)."""
         if LoteMovimentacao.objects.exists():
             self.stdout.write('Movimentações: já existem, pulando.')
             return
@@ -423,7 +423,6 @@ class Command(BaseCommand):
                 self.stdout.write(f'Avulsa ENT — {nome_produto} × {qtd}: criada')
 
     def _seed_vendas(self, gerente):
-        """Cria vendas históricas, cada item usa uma peça própria."""
         if Venda.objects.exists():
             self.stdout.write('Vendas: já existem, pulando.')
             return
@@ -455,33 +454,56 @@ class Command(BaseCommand):
                         self.stderr.write(f'  Produto "{nome_produto}" não encontrado, pulando item.')
                         continue
 
-                    peca_status = (
-                        Peca.Status.DISPONIVEL if status in ('RES', 'ORC')
-                        else Peca.Status.VENDIDA
-                    )
-
                     peso, custo = defaults_map.get(nome_produto, (Decimal('1.0'), Decimal('0.00')))
                     for _ in range(qtd):
                         peca = Peca.objects.create(
                             produto=produto,
-                            status=peca_status,
+                            status=Peca.Status.DISPONIVEL,
                             peso_gramas=peso,
                             custo_mao_de_obra=custo,
                         )
+                        MovimentacaoEstoque.objects.create(
+                            produto=produto,
+                            peca=peca,
+                            tipo=MovimentacaoEstoque.Tipo.ENTRADA,
+                            quantidade=1,
+                            responsavel=gerente,
+                            observacoes='Estoque inicial',
+                        )
+
                         ItemVenda.objects.create(
                             venda=venda,
                             peca=peca,
                             preco_unitario_pago=peca.preco_sugerido,
                         )
-                        MovimentacaoEstoque.objects.create(
-                            produto=produto,
-                            peca=peca,
-                            tipo=MovimentacaoEstoque.Tipo.SAIDA,
-                            quantidade=1,
-                            referencia_venda=venda,
-                            responsavel=gerente,
-                            observacoes=f'Venda #{venda.pk}',
-                        )
+
+                        if status == Venda.Status.CONFIRMADA:
+                            peca.status = Peca.Status.VENDIDA
+                            MovimentacaoEstoque.objects.create(
+                                produto=produto, peca=peca,
+                                tipo=MovimentacaoEstoque.Tipo.SAIDA, quantidade=1,
+                                referencia_venda=venda, responsavel=gerente,
+                                observacoes=f'Venda #{venda.pk}',
+                            )
+                        elif status == Venda.Status.RESERVADA:
+                            peca.status = Peca.Status.RESERVADA
+                        elif status == Venda.Status.ORCAMENTO:
+                            peca.status = Peca.Status.DISPONIVEL
+                        elif status == Venda.Status.CANCELADA:
+                            MovimentacaoEstoque.objects.create(
+                                produto=produto, peca=peca,
+                                tipo=MovimentacaoEstoque.Tipo.SAIDA, quantidade=1,
+                                referencia_venda=venda, responsavel=gerente,
+                                observacoes=f'Venda #{venda.pk}',
+                            )
+                            MovimentacaoEstoque.objects.create(
+                                produto=produto, peca=peca,
+                                tipo=MovimentacaoEstoque.Tipo.DEVOLUCAO, quantidade=1,
+                                referencia_venda=venda, responsavel=gerente,
+                                observacoes=f'Cancelamento da venda #{venda.pk}',
+                            )
+                            peca.status = Peca.Status.DISPONIVEL
+                        peca.save(update_fields=['status'])
 
                 venda.recalcular_total()
                 self.stdout.write(

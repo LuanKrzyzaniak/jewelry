@@ -10,6 +10,7 @@ class Cliente(models.Model):
     nome       = models.CharField(max_length=150, db_index=True)
     telefone   = models.CharField(max_length=20, blank=True)
     observacao = models.TextField(blank=True)
+    ativo      = models.BooleanField(default=True)
     criado_em  = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -27,6 +28,7 @@ class Fornecedor(models.Model):
     cnpj          = models.CharField(max_length=18, unique=True, blank=True, null=True)
     email         = models.EmailField(blank=True)
     telefone      = models.CharField(max_length=20, blank=True)
+    observacao    = models.TextField(blank=True)
     ativo         = models.BooleanField(default=True)
     criado_em     = models.DateTimeField(auto_now_add=True)
 
@@ -93,7 +95,7 @@ class ItemVenda(models.Model):
         on_delete=models.PROTECT,
         related_name='itens_vendidos',
         db_index=True,
-        null=True,   # null=True apenas para migração; sempre preenchido pelo código
+        null=True,
     )
     preco_unitario_pago = models.DecimalField(
         max_digits=12, decimal_places=2,

@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
@@ -43,10 +44,8 @@ class MovimentacaoListView(LoginRequiredMixin, ListView):
         return ctx
 
 
+@login_required
 def movimentacao_entrada(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
-
     form = MovimentacaoEntradaForm(request.POST or None)
 
     if request.method == 'POST' and form.is_valid():
@@ -81,9 +80,8 @@ def movimentacao_entrada(request):
     return render(request, 'estoque/movimentacao_entrada_form.html', {'form': form})
 
 
+@login_required
 def movimentacao_saida(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
 
     tipos_produto = TipoProduto.objects.order_by('nome')
 
@@ -195,6 +193,7 @@ class LoteDetailView(LoginRequiredMixin, DetailView):
         return ctx
 
 
+@login_required
 def lote_item_adicionar(request, lote_pk):
     lote = get_object_or_404(LoteMovimentacao, pk=lote_pk)
 
@@ -245,6 +244,7 @@ def lote_item_adicionar(request, lote_pk):
         return redirect('estoque:lote_detail', pk=lote_pk)
 
 
+@login_required
 def lote_item_remover(request, lote_pk, item_pk):
     lote = get_object_or_404(LoteMovimentacao, pk=lote_pk)
     item = get_object_or_404(ItemLote, pk=item_pk, lote=lote)
@@ -260,6 +260,7 @@ def lote_item_remover(request, lote_pk, item_pk):
     return redirect('estoque:lote_detail', pk=lote_pk)
 
 
+@login_required
 def lote_item_atualizar(request, lote_pk, item_pk):
     lote = get_object_or_404(LoteMovimentacao, pk=lote_pk)
     item = get_object_or_404(ItemLote, pk=item_pk, lote=lote)
@@ -281,6 +282,7 @@ def lote_item_atualizar(request, lote_pk, item_pk):
     return redirect('estoque:lote_detail', pk=lote_pk)
 
 
+@login_required
 def lote_cancelar(request, lote_pk):
     lote = get_object_or_404(LoteMovimentacao, pk=lote_pk)
 
@@ -297,6 +299,7 @@ def lote_cancelar(request, lote_pk):
     return redirect('estoque:lote_detail', pk=lote_pk)
 
 
+@login_required
 def lote_finalizar(request, lote_pk):
     lote = get_object_or_404(LoteMovimentacao, pk=lote_pk)
 

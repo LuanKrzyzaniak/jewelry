@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Ligas — Joalheria{% endblock %}
-{% block breadcrumb %}Catálogo / Ligas{% endblock %}
+{% block breadcrumb %}<a href="{% url 'catalogo:peca_list' %}">Catálogo</a> / <a href="{% url 'catalogo:liga_list' %}">Ligas</a>{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4">

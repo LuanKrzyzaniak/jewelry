@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}{% if form.instance.pk %}Editar{% else %}Nova{% endif %} Liga — Joalheria{% endblock %}
-{% block breadcrumb %}Catálogo / <a href="{% url 'catalogo:liga_list' %}">Ligas</a> / {% if form.instance.pk %}Editar{% else %}Nova{% endif %}{% endblock %}
+{% block breadcrumb %}<a href="{% url 'catalogo:peca_list' %}">Catálogo</a> / <a href="{% url 'catalogo:liga_list' %}">Ligas</a> / {% if form.instance.pk %}Editar{% else %}Nova{% endif %}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">

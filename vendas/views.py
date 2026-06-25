@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
@@ -145,12 +146,12 @@ class VendaDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'venda'
 
     def get_object(self, queryset=None):
-        return (
+        qs = (
             Venda.objects
             .select_related('cliente', 'vendedor')
             .prefetch_related('itens__peca__produto__liga', 'itens__peca__fotos')
-            .get(pk=self.kwargs['pk'])
         )
+        return get_object_or_404(qs, pk=self.kwargs['pk'])
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -193,6 +194,7 @@ class VendaUpdateView(LoginRequiredMixin, UpdateView):
 # Desconto — editado via POST na tela de detalhe da venda
 # ---------------------------------------------------------------------------
 
+@login_required
 def venda_desconto_atualizar(request, pk):
     venda = get_object_or_404(Venda, pk=pk)
 
@@ -226,6 +228,7 @@ def venda_desconto_atualizar(request, pk):
 # Item de Venda — adicionado via POST na tela de detalhe da venda
 # ---------------------------------------------------------------------------
 
+@login_required
 def item_adicionar(request, venda_pk):
     venda = get_object_or_404(Venda, pk=venda_pk)
 
@@ -266,6 +269,7 @@ def item_adicionar(request, venda_pk):
     return redirect('vendas:venda_detail', pk=venda_pk)
 
 
+@login_required
 def venda_cancelar(request, pk):
     venda = get_object_or_404(Venda, pk=pk)
 
@@ -296,6 +300,7 @@ def venda_cancelar(request, pk):
     return redirect('vendas:venda_list')
 
 
+@login_required
 def item_remover(request, venda_pk, item_pk):
     venda = get_object_or_404(Venda, pk=venda_pk)
     item  = get_object_or_404(ItemVenda, pk=item_pk, venda=venda)

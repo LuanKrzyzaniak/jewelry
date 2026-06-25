@@ -2,7 +2,7 @@
 {% load vendas_filters %}
 
 {% block title %}Clientes — Joalheria{% endblock %}
-{% block breadcrumb %}Vendas / Clientes{% endblock %}
+{% block breadcrumb %}<a href="{% url 'vendas:venda_list' %}">Vendas</a> / <a href="{% url 'vendas:cliente_list' %}">Clientes</a>{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4">
@@ -21,7 +21,7 @@
 <div class="card border-0 shadow-sm">
   <table class="table table-hover align-middle mb-0">
     <thead class="table-light">
-      <tr><th>Nome</th><th>Telefone</th><th>Observação</th><th></th></tr>
+      <tr><th>Nome</th><th>Telefone</th><th>Observação</th><th>Status</th><th></th></tr>
     </thead>
     <tbody>
       {% for cliente in clientes %}
@@ -29,6 +29,10 @@
         <td class="fw-medium">{{ cliente.nome }}</td>
         <td class="small">{{ cliente.telefone|formato_tel|default:"—" }}</td>
         <td class="small text-muted">{{ cliente.observacao|default:"—"|truncatechars:60 }}</td>
+        <td>
+          {% if cliente.ativo %}<span class="badge bg-success-subtle text-success">Ativo</span>
+          {% else %}<span class="badge bg-secondary-subtle text-secondary">Inativo</span>{% endif %}
+        </td>
         <td class="text-end">
           <a href="{% url 'vendas:cliente_update' cliente.pk %}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-pencil"></i>
@@ -36,7 +40,7 @@
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="4" class="text-center text-muted py-4">Nenhum cliente cadastrado.</td></tr>
+      <tr><td colspan="5" class="text-center text-muted py-4">Nenhum cliente cadastrado.</td></tr>
       {% endfor %}
     </tbody>
   </table>

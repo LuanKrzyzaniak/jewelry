@@ -8,14 +8,14 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
     :root {
-      --djk-dark: #1a1a2e;
-      --djk-gold: #c9a84c;
+      --djk-dark: #1b1920;
+      --djk-gold: #c9a227;
     }
 
     body {
       background: #f5f3ef;
       font-family: 'Segoe UI', system-ui, sans-serif;
-      color: #1a1a2e;
+      color: #1b1920;
     }
 
     /* action bar */
@@ -80,7 +80,7 @@
       flex-direction: column;
     }
     .peca-card.metal-ouro  { border-top-color: var(--djk-gold); }
-    .peca-card.metal-prata { border-top-color: #9ea8b5; }
+    .peca-card.metal-prata { border-top-color: #9ea3ab; }
     .peca-card.metal-outro { border-top-color: #6ea8fe; }
 
     .peca-foto {
@@ -111,7 +111,7 @@
       font-size: .88rem;
       font-weight: 700;
       line-height: 1.25;
-      color: #1a1a2e;
+      color: #1b1920;
       margin-bottom: .5rem;
     }
     .peca-liga {
@@ -153,7 +153,7 @@
     .cat-footer {
       text-align: center;
       font-size: .75rem;
-      color: #9ea8b5;
+      color: #9ea3ab;
       border-top: 1px solid #e9ecef;
       padding-top: 1.25rem;
       margin-top: 2.5rem;
@@ -234,7 +234,7 @@
           <div class="peca-foto-placeholder"
                style="background:{% if metal == 'XAU' %}linear-gradient(135deg,#fffde7,#fff3cd){% elif metal == 'XAG' %}linear-gradient(135deg,#f5f5f5,#e0e0e0){% elif peca.produto.liga %}linear-gradient(135deg,#e3f2fd,#bbdefb){% else %}linear-gradient(135deg,#f8f9fa,#e9ecef){% endif %}">
             <i class="bi bi-gem"
-               style="color:{% if metal == 'XAU' %}#c9a84c{% elif metal == 'XAG' %}#9ea8b5{% elif peca.produto.liga %}#6ea8fe{% else %}#ced4da{% endif %};opacity:.65"></i>
+               style="color:{% if metal == 'XAU' %}#c9a227{% elif metal == 'XAG' %}#9ea3ab{% elif peca.produto.liga %}#6ea8fe{% else %}#ced4da{% endif %};opacity:.65"></i>
           </div>
           {% endif %}
           {% endwith %}
@@ -245,7 +245,7 @@
             {% if peca.produto.liga %}
             <div class="peca-liga">
               <span class="peca-liga-dot"
-                    style="background:{% if metal == 'XAU' %}#c9a84c{% elif metal == 'XAG' %}#9ea8b5{% else %}#6ea8fe{% endif %}"></span>
+                    style="background:{% if metal == 'XAU' %}#c9a227{% elif metal == 'XAG' %}#9ea3ab{% else %}#6ea8fe{% endif %}"></span>
               {{ peca.produto.liga.nome }}
             </div>
             {% endif %}

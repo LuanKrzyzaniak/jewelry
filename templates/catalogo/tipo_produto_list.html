@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}Tipos de Produto — Joalheria{% endblock %}
-{% block breadcrumb %}Gerência / Tipos de Produto{% endblock %}
+{% block breadcrumb %}Gerência / <a href="{% url 'catalogo:tipo_produto_list' %}">Tipos de Produto</a>{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4">

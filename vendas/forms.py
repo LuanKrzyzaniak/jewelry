@@ -8,29 +8,32 @@ from .models import Cliente, Fornecedor, Venda
 class ClienteForm(forms.ModelForm):
     class Meta:
         model  = Cliente
-        fields = ['nome', 'telefone', 'observacao']
+        fields = ['nome', 'telefone', 'observacao', 'ativo']
         widgets = {
             'nome':       forms.TextInput(attrs={'class': 'form-control'}),
             'telefone':   forms.TextInput(attrs={'class': 'form-control'}),
             'observacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'ativo':      forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         labels = {
             'nome':       'Nome',
             'telefone':   'Telefone',
             'observacao': 'Observação',
+            'ativo':      'Ativo',
         }
 
 
 class FornecedorForm(forms.ModelForm):
     class Meta:
         model  = Fornecedor
-        fields = ['razao_social', 'nome_fantasia', 'cnpj', 'telefone', 'email', 'ativo']
+        fields = ['razao_social', 'nome_fantasia', 'cnpj', 'telefone', 'email', 'observacao', 'ativo']
         widgets = {
             'razao_social':  forms.TextInput(attrs={'class': 'form-control'}),
             'nome_fantasia': forms.TextInput(attrs={'class': 'form-control'}),
             'cnpj':          forms.TextInput(attrs={'class': 'form-control'}),
             'telefone':      forms.TextInput(attrs={'class': 'form-control'}),
             'email':         forms.EmailInput(attrs={'class': 'form-control'}),
+            'observacao':    forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'ativo':         forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         labels = {
@@ -39,6 +42,7 @@ class FornecedorForm(forms.ModelForm):
             'cnpj':          'CNPJ',
             'telefone':      'Telefone',
             'email':         'E-mail',
+            'observacao':    'Observação',
             'ativo':         'Ativo',
         }
 
@@ -60,6 +64,7 @@ class VendaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['cliente'].queryset    = Cliente.objects.filter(ativo=True).order_by('nome')
         self.fields['cliente'].empty_label = 'Selecione o cliente'
         self.fields['status'].empty_label  = None
         self.fields['status'].choices = [
