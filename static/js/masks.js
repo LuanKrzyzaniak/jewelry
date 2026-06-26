@@ -50,20 +50,17 @@ function setupDecimalMask(input, decimals) {
         }
     });
 
-    // Converte vírgula para ponto antes de enviar (Django espera ponto)
     input.closest('form')?.addEventListener('submit', () => {
         input.value = input.value.replace(',', '.');
     });
 }
 
 function setupDateMask(input) {
-    // Converte yyyy-mm-dd → dd/mm/yyyy para exibição inicial
     function isoParaBr(val) {
         const m = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
         return m ? `${m[3]}/${m[2]}/${m[1]}` : val;
     }
 
-    // Converte dd/mm/yyyy → yyyy-mm-dd antes de enviar
     function brParaIso(val) {
         const m = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
         return m ? `${m[3]}-${m[2]}-${m[1]}` : val;

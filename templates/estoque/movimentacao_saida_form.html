@@ -47,8 +47,9 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label small fw-semibold">{{ form.observacoes.label }}</label>
+            <label class="form-label small fw-semibold">{{ form.observacoes.label }}<span id="obsObrig" class="text-danger d-none"> *</span></label>
             {{ form.observacoes }}
+            <div id="obsErro" class="text-danger small mt-1 d-none">Observação é obrigatória em ajustes — informe o motivo.</div>
             {% for error in form.observacoes.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
           </div>
 
@@ -107,12 +108,23 @@
   </div>
 </div>
 
-{{ pecas_json|json_script:"pecas-data" }}
+{{ pecas_disponiveis_json|json_script:"pecas-disp" }}
+{{ pecas_retiradas_json|json_script:"pecas-ret" }}
 {% endblock %}
 
 {% block extra_js %}
 <script>
-const PECAS = JSON.parse(document.getElementById('pecas-data').textContent);
+const DATASETS = {
+  disp: JSON.parse(document.getElementById('pecas-disp').textContent),
+  ret:  JSON.parse(document.getElementById('pecas-ret').textContent),
+};
+// Tipos que DEVOLVEM a peça ao estoque (origem = peças retiradas).
+const TIPOS_ENTRADA = ['AJP', 'DEV'];
+const tipoSelect = document.querySelector('#formSaida [name="tipo"]');
+function pecasAtivas() {
+  return TIPOS_ENTRADA.includes(tipoSelect.value) ? DATASETS.ret : DATASETS.disp;
+}
+let PECAS = pecasAtivas();
 let selecionada = null;
 
 function formatBRL(val) {
@@ -179,7 +191,7 @@ function filtrar() {
   const filtradas = filtrarLista();
   const contador  = document.getElementById('contadorResultados');
   contador.textContent = filtradas.length === PECAS.length
-    ? `${PECAS.length} peça${PECAS.length === 1 ? '' : 's'} disponível${PECAS.length === 1 ? '' : 'eis'}`
+    ? `${PECAS.length} peça${PECAS.length === 1 ? '' : 's'}`
     : `${filtradas.length} de ${PECAS.length} peças`;
   renderCards(filtradas);
 
@@ -190,6 +202,39 @@ function filtrar() {
 const inputBusca = document.getElementById('searchPeca');
 inputBusca.addEventListener('input', filtrar);
 document.getElementById('filtroTipo').addEventListener('change', filtrar);
+
+// Troca o conjunto de peças conforme o tipo (saída usa disponíveis,
+// entrada/devolução usa retiradas) e limpa a seleção anterior.
+function resetSelecao() {
+  selecionada = null;
+  document.querySelector('#formSaida [name="peca_id"]').value = '';
+  const txt = document.getElementById('pecaSelecionadaTexto');
+  txt.textContent = 'Nenhuma peça selecionada.';
+  txt.className = 'text-muted small';
+  document.getElementById('btnSalvarSaida').disabled = true;
+}
+// Observação é obrigatória nos ajustes (negativo/positivo).
+const TIPOS_AJUSTE = ['AJN', 'AJP'];
+function atualizarObsObrigatoria() {
+  document.getElementById('obsObrig').classList.toggle('d-none', !TIPOS_AJUSTE.includes(tipoSelect.value));
+}
+
+tipoSelect.addEventListener('change', () => {
+  PECAS = pecasAtivas();
+  resetSelecao();
+  atualizarObsObrigatoria();
+});
+atualizarObsObrigatoria();
+
+document.getElementById('formSaida').addEventListener('submit', (e) => {
+  const obs = document.querySelector('#formSaida [name="observacoes"]').value.trim();
+  const precisa = TIPOS_AJUSTE.includes(tipoSelect.value) && !obs;
+  document.getElementById('obsErro').classList.toggle('d-none', !precisa);
+  if (precisa) {
+    e.preventDefault();
+    document.querySelector('#formSaida [name="observacoes"]').focus();
+  }
+});
 
 document.getElementById('btnLimparBusca').addEventListener('click', () => {
   inputBusca.value = '';

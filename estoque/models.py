@@ -49,7 +49,6 @@ class LoteMovimentacao(models.Model):
 class ItemLote(models.Model):
     lote = models.ForeignKey(LoteMovimentacao, on_delete=models.CASCADE, related_name='itens')
 
-    # Lote de ENTRADA: produto + quantidade + peso_padrao + custo_mao_de_obra (cria peças ao finalizar)
     produto           = models.ForeignKey(
         'catalogo.Produto', on_delete=models.PROTECT,
         null=True, blank=True, related_name='itens_lote',
@@ -67,7 +66,6 @@ class ItemLote(models.Model):
         validators=[MinValueValidator(Decimal('0.00'))],
     )
 
-    # Lote de SAÍDA: peça específica (OneToOne — cada peça em no máximo um lote ativo)
     peca = models.OneToOneField(
         'catalogo.Peca', on_delete=models.PROTECT,
         null=True, blank=True, related_name='item_lote',

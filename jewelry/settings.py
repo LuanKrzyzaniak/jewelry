@@ -87,4 +87,4 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 # Chave da GoldAPI (https://www.goldapi.io), se ficar vazio usa dados mockados
-GOLDAPI_KEY = ''
+GOLDAPI_KEY = 'goldapi-282321ca22fb2eb973a62412fb7273aa-io'

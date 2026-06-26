@@ -85,6 +85,9 @@ def movimentacao_saida(request):
 
     tipos_produto = TipoProduto.objects.order_by('nome')
 
+    # Ajustes que DEVOLVEM a peça ao estoque (origem = peças retiradas).
+    tipos_entrada = (MovimentacaoEstoque.Tipo.AJUSTE_POS, MovimentacaoEstoque.Tipo.DEVOLUCAO)
+
     if request.method == 'POST':
         form = MovimentacaoSaidaForm(request.POST)
         if form.is_valid():
@@ -93,11 +96,20 @@ def movimentacao_saida(request):
             cliente = form.cleaned_data.get('cliente')
             obs     = form.cleaned_data.get('observacoes', '')
 
-            novo_status = (
-                Peca.Status.DISPONIVEL
-                if tipo in (MovimentacaoEstoque.Tipo.AJUSTE_POS, MovimentacaoEstoque.Tipo.DEVOLUCAO)
-                else Peca.Status.RETIRADA
-            )
+            entrada = tipo in tipos_entrada
+            status_esperado = Peca.Status.RETIRADA if entrada else Peca.Status.DISPONIVEL
+            novo_status     = Peca.Status.DISPONIVEL if entrada else Peca.Status.RETIRADA
+
+            # Garante a transição válida (ex.: não "retirar" peça já retirada,
+            # nem "devolver" peça que já está disponível ou vendida).
+            if peca.status != status_esperado:
+                rotulo = 'retirada' if entrada else 'disponível'
+                messages.error(
+                    request,
+                    f'A peça {peca.codigo} não está {rotulo} — '
+                    f'operação inválida para "{dict(MovimentacaoEstoque.Tipo.choices)[tipo]}".'
+                )
+                return redirect('estoque:movimentacao_saida')
 
             with transaction.atomic():
                 MovimentacaoEstoque.objects.create(
@@ -118,9 +130,10 @@ def movimentacao_saida(request):
         form = MovimentacaoSaidaForm()
 
     return render(request, 'estoque/movimentacao_saida_form.html', {
-        'form':          form,
-        'pecas_json':    _pecas_disponiveis_json(),
-        'tipos_produto': tipos_produto,
+        'form':                   form,
+        'pecas_disponiveis_json': _pecas_disponiveis_json(),
+        'pecas_retiradas_json':   _pecas_por_status_json(Peca.Status.RETIRADA),
+        'tipos_produto':          tipos_produto,
     })
 
 
@@ -368,10 +381,10 @@ def _finalizar_saida(lote, obs_base, responsavel):
         peca.save(update_fields=['status'])
 
 
-def _pecas_disponiveis_json(excluir_ids=None):
+def _pecas_por_status_json(status, excluir_ids=None):
     qs = (
         Peca.objects
-        .filter(status=Peca.Status.DISPONIVEL)
+        .filter(status=status)
         .select_related('produto__tipo', 'produto__liga__metal')
         .prefetch_related('fotos')
         .order_by('produto__nome', 'codigo')
@@ -394,6 +407,10 @@ def _pecas_disponiveis_json(excluir_ids=None):
             'foto_url': foto.imagem.url if foto else None,
         })
     return resultado
+
+
+def _pecas_disponiveis_json(excluir_ids=None):
+    return _pecas_por_status_json(Peca.Status.DISPONIVEL, excluir_ids)
 
 
 def _produtos_json():

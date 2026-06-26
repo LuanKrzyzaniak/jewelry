@@ -54,10 +54,14 @@ class MovimentacaoSaidaForm(forms.Form):
     peca_id     = forms.IntegerField(widget=forms.HiddenInput())
     tipo        = forms.ChoiceField(
         choices=[
-            (MovimentacaoEstoque.Tipo.SAIDA,      'Saída'),
-            (MovimentacaoEstoque.Tipo.AJUSTE_NEG, 'Ajuste Negativo'),
-            (MovimentacaoEstoque.Tipo.AJUSTE_POS, 'Ajuste Positivo'),
-            (MovimentacaoEstoque.Tipo.DEVOLUCAO,  'Devolução'),
+            ('Saídas (remove do estoque)', [
+                (MovimentacaoEstoque.Tipo.SAIDA,      'Saída'),
+                (MovimentacaoEstoque.Tipo.AJUSTE_NEG, 'Ajuste Negativo'),
+            ]),
+            ('Entradas (devolve ao estoque)', [
+                (MovimentacaoEstoque.Tipo.AJUSTE_POS, 'Ajuste Positivo'),
+                (MovimentacaoEstoque.Tipo.DEVOLUCAO,  'Devolução'),
+            ]),
         ],
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='Tipo',
@@ -75,6 +79,15 @@ class MovimentacaoSaidaForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control'}),
         label='Observações',
     )
+
+    def clean(self):
+        cleaned = super().clean()
+        tipo = cleaned.get('tipo')
+        obs  = (cleaned.get('observacoes') or '').strip()
+        ajustes = (MovimentacaoEstoque.Tipo.AJUSTE_NEG, MovimentacaoEstoque.Tipo.AJUSTE_POS)
+        if tipo in ajustes and not obs:
+            self.add_error('observacoes', 'Observação é obrigatória em ajustes — informe o motivo.')
+        return cleaned
 
 
 class LoteForm(forms.ModelForm):

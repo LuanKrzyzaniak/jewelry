@@ -63,7 +63,6 @@ def vendas(request):
 def giro(request):
     inicio, fim = _parse_periodo(request)
 
-    # Quantidade saída por produto no período (saídas = SAIDA + AJUSTE_NEG)
     saidas = (
         ME.objects.filter(
             tipo__in=[ME.Tipo.SAIDA, ME.Tipo.AJUSTE_NEG],
@@ -75,9 +74,6 @@ def giro(request):
     )
     saidas_map = {s['produto_id']: s['total_saida'] for s in saidas}
 
-    # Estoque atual = nº de peças disponíveis (mesma definição de Produto.estoque_atual),
-    # nunca negativo — diferente de somar movimentações, que pode ficar negativo quando
-    # há peças vendidas/ajustadas sem uma ENTRADA correspondente.
     produtos = Produto.objects.select_related('liga', 'tipo').annotate(
         estoque_calc=Count(
             'pecas',
